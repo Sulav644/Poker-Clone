@@ -21,9 +21,24 @@ class PlayerIdentity extends StatelessWidget {
     return Container(
         width: widthWithScreenRatio(context, width),
         decoration: BoxDecoration(
-            color: title.isEmpty
-                ? Color.fromARGB(255, 100, 34, 10)
-                : Color.fromARGB(255, 44, 13, 2),
+            gradient: (() {
+              if (title.contains('user') || (title.isNotEmpty && bits > 0)) {
+                return LinearGradient(colors: [
+                  Color.fromARGB(255, 34, 24, 21),
+                  Color.fromARGB(255, 94, 26, 1)
+                ]);
+              } else if (bits == 0) {
+                return LinearGradient(colors: [
+                  Color.fromARGB(255, 34, 24, 21),
+                  Color.fromARGB(255, 34, 24, 21)
+                ]);
+              } else {
+                return LinearGradient(colors: [
+                  Color.fromARGB(255, 94, 26, 1),
+                  Color.fromARGB(255, 94, 26, 1)
+                ]);
+              }
+            }()),
             borderRadius: BorderRadius.circular(10)),
         child: Padding(
           padding: EdgeInsets.symmetric(
