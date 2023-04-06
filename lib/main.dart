@@ -19,11 +19,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
         providers: [
-          BlocProvider(create: (context) => CardsSelectCubit()),
           BlocProvider(create: (context) => CardVisibilityCubit()),
-          BlocProvider(create: (context) => SelectedCardCubit()),
           BlocProvider(create: (context) => StartGameCubit()),
           BlocProvider(create: (context) => WinGameCubit()),
+          BlocProvider(create: (context) => ShowUserCallCubit()),
+          BlocProvider(create: (context) => ShowUserCallOptionsCubit()),
+          BlocProvider(create: (context) => ShowRaisedPricesCubit()),
         ],
         child: MaterialApp(
           title: 'Flutter Demo',

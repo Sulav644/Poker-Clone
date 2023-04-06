@@ -27,7 +27,13 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
-  late PlayingCard firstPlayerCard, secondPlayerCard, thirdPlayerCard;
+  final callLabelColor = Color.fromARGB(255, 117, 135, 150);
+  late PlayingCard firstCard, secondCard, thirdCard, fourthCard, fifthCard;
+  late int highestCall,
+      firstPlayerCall,
+      secondPlayerCall,
+      thirdPlayerCall,
+      fourthPlayerCall;
   late AnimationController firstPlayerController,
       secondPlayerController,
       thirdPlayerController,
@@ -42,25 +48,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    firstPlayerCard = PlayingCard(Suit.clubs, CardValue.ace);
-    secondPlayerCard = PlayingCard(Suit.clubs, CardValue.ace);
-    thirdPlayerCard = PlayingCard(Suit.clubs, CardValue.ace);
+    firstCard = PlayingCard(Suit.clubs, CardValue.ace);
+    secondCard = PlayingCard(Suit.clubs, CardValue.ace);
+    thirdCard = PlayingCard(Suit.clubs, CardValue.ace);
+    fourthCard = PlayingCard(Suit.clubs, CardValue.ace);
+    fifthCard = PlayingCard(Suit.clubs, CardValue.ace);
+    highestCall = 0;
+    firstPlayerCall = 0;
+    secondPlayerCall = 0;
+    thirdPlayerCall = 0;
+    fourthPlayerCall = 0;
+
     firstPlayerController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
-    secondPlayerController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    thirdPlayerController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-    userController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
+
     initAnimation();
   }
 
@@ -72,45 +75,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           end: 1000.milliseconds,
           curve: Curves.ease,
         )
-        .animate(AnimProps.left, tween: Tween(begin: 60.0, end: 120.0))
+        .animate(AnimProps.top, tween: Tween(begin: 60.0, end: 120.0))
         .parent
         .animatedBy(firstPlayerController);
-    secondPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top, tween: Tween(begin: 60.0, end: 120.0))
-        .parent
-        .animatedBy(secondPlayerController);
-    thirdPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.left, tween: Tween(begin: 60.0, end: 120.0))
-        .parent
-        .animatedBy(thirdPlayerController);
-    userAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top, tween: Tween(begin: 60.0, end: 120.0))
-        .parent
-        .animatedBy(userController);
   }
 
   void startFirstPlayerAnimation(BuildContext context) {
-    context
-        .read<CardVisibilityCubit>()
-        .toggleVisibility([true, false, false, false]);
     firstPlayerAnimation = TimelineTween<AnimProps>()
         // opacity
         .addScene(
@@ -124,140 +94,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 end: widthWithScreenRatio(context, 0.29)))
         .parent
         .animatedBy(firstPlayerController);
-    firstPlayerController
-        .forward()
-        .then((value) => startSecondPlayerAnimation(context));
-  }
-
-  void startSecondPlayerAnimation(BuildContext context) {
-    context
-        .read<CardVisibilityCubit>()
-        .toggleVisibility([true, true, false, false]);
-    secondPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top,
-            tween: Tween(
-                begin: heightWithScreenRatio(context, 0.35),
-                end: heightWithScreenRatio(context, 0.23)))
-        .parent
-        .animatedBy(secondPlayerController);
-    secondPlayerController
-        .forward()
-        .then((value) => startThirdPlayerAnimation(context));
-  }
-
-  void startThirdPlayerAnimation(BuildContext context) {
-    context
-        .read<CardVisibilityCubit>()
-        .toggleVisibility([true, true, true, false]);
-    thirdPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.left,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.02),
-                end: widthWithScreenRatio(context, 0.289)))
-        .parent
-        .animatedBy(thirdPlayerController);
-    thirdPlayerController.forward();
-  }
-
-  void startUserAnimation(BuildContext context) {
-    userAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top,
-            tween: Tween(
-                begin: heightWithScreenRatio(context, 0.4),
-                end: heightWithScreenRatio(context, 0.22)))
-        .parent
-        .animatedBy(userController);
-    userController.forward().then(
-        (value) => Future.delayed(Duration(milliseconds: 900)).then((value) {
-              context.read<CardVisibilityCubit>().resetVisibility();
-              resetAnimations();
-              context.read<WinGameCubit>().toggleState(true);
-            }));
-  }
-
-  void moveCardsToFirstPlayerAnimation(BuildContext context) {
-    firstPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.left,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.29),
-                end: widthWithScreenRatio(context, 0.01)))
-        .parent
-        .animatedBy(firstPlayerController);
-
-    secondPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.2),
-                end: widthWithScreenRatio(context, 0.1)))
-        .parent
-        .animatedBy(secondPlayerController);
-
-    thirdPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.left,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.02),
-                end: widthWithScreenRatio(context, 0.29)))
-        .parent
-        .animatedBy(thirdPlayerController);
-    thirdPlayerController.forward();
-
-    userAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.2),
-                end: widthWithScreenRatio(context, 0.1)))
-        .parent
-        .animatedBy(userController);
-    userController.forward();
   }
 
   void resetAnimations() {
     firstPlayerController.reverse();
-    secondPlayerController.reverse();
-    thirdPlayerController.reverse();
-    userController.reverse();
   }
 
   @override
@@ -268,12 +108,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final cardsList = context.watch<CardsSelectCubit>().state;
     final random = new Random();
     final isWinGame = context.watch<WinGameCubit>().state;
     final cardVisibilty = context.watch<CardVisibilityCubit>().state;
-    final selectedCard = context.watch<SelectedCardCubit>().state;
     final showStartGameDialog = context.watch<StartGameCubit>().state;
+    final userCallList = context.watch<ShowUserCallCubit>().state;
+    final showUserCallOptions = context.watch<ShowUserCallOptionsCubit>().state;
+    final showRaisedPrices = context.watch<ShowRaisedPricesCubit>().state;
+    String getUserCallPrice(String title) => userCallList[
+            userCallList.indexWhere((element) => element.user == title)]
+        .price
+        .toString();
+    bool hasUserCalledWithCall(String title) => userCallList
+        .where((element) => element.user == title && element.isCall == true)
+        .isNotEmpty;
+    bool hasUserCalledWithRaise(String title) => userCallList
+        .where((element) => element.user == title && element.isRaised == true)
+        .isNotEmpty;
+    void setUserCall(
+            {required String name,
+            required bool isCalled,
+            required bool isRaised,
+            required int price}) =>
+        context.read<ShowUserCallCubit>().setUserCall(UserCall(
+            user: name, isCall: isCalled, isRaised: isRaised, price: price));
 
     return Scaffold(
       body: Stack(
@@ -304,46 +162,34 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               width: 0.21,
                               title: 'bot2',
                               bits: 2),
-                          Container(
-                            width: widthWithScreenRatio(context, 0.16),
-                            height: heightWithScreenRatio(context, 0.22),
-                            child: Stack(
-                              children: [
-                                for (var i = 0.044; i > 0.02; i -= 0.006)
-                                  Positioned(
-                                    left: widthWithScreenRatio(context, 0.092),
-                                    top: widthWithScreenRatio(context, i),
-                                    child: Transform.rotate(
-                                      angle: -80 / 180 * pi,
-                                      child: Image.asset(
-                                        'assets/images/card.png',
-                                        width:
-                                            widthWithScreenRatio(context, 0.04),
-                                      ),
-                                    ),
-                                  ),
-                                Positioned(
-                                  left: widthWithScreenRatio(context, 0.089),
-                                  top: heightWithScreenRatio(context, 0),
-                                  child: Container(
-                                    width: widthWithScreenRatio(context, 0.056),
-                                    height:
-                                        widthWithScreenRatio(context, 0.056),
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius:
-                                            BorderRadius.circular(100)),
-                                    alignment: Alignment.center,
-                                    child: Image.asset(
-                                      'assets/images/bot.png',
-                                      width:
-                                          widthWithScreenRatio(context, 0.04),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
+                          verticalBotWithCard(
+                              leftForFirstCard: 0.112,
+                              topForFirstCard: 0.028,
+                              angleForFirstCard: -40,
+                              leftForSecondCard: 0.106,
+                              topForSecondCard: 0.035,
+                              angleForSecondCard: -24,
+                              leftForBot: 0.089,
+                              topForBot: 0),
+                          if (hasUserCalledWithCall('fourthPlayer') ||
+                              hasUserCalledWithRaise('fourthPlayer'))
+                            callLabel(
+                                top: 0.15,
+                                left: 0.04,
+                                color: callLabelColor,
+                                title: getUserCallPrice('fourthPlayer')),
+                          if (hasUserCalledWithCall('fourthPlayer'))
+                            callTag(
+                                top: 0.08,
+                                left: 0,
+                                color: Colors.red,
+                                title: 'CALL'),
+                          if (hasUserCalledWithRaise('fourthPlayer'))
+                            callTag(
+                                top: 0.08,
+                                left: 0,
+                                color: Colors.red,
+                                title: 'RAISE')
                         ],
                       )),
                   SettingsWidgets(),
@@ -356,42 +202,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     PlayerIdentity(
                         context: context, width: 0.09, title: 'bot1', bits: 0),
                     Spacing().verticalSpaceWithRatio(context, 0.01),
-                    Container(
-                      width: widthWithScreenRatio(context, 0.12),
-                      height: heightWithScreenRatio(context, 0.24),
-                      child: Stack(
-                        children: [
-                          for (var i = 0.035; i > 0.01; i -= 0.006)
-                            Positioned(
-                              left: widthWithScreenRatio(context, 0.034),
-                              top: widthWithScreenRatio(context, i),
-                              child: Transform.rotate(
-                                angle: 40 / 180 * pi,
-                                child: Image.asset(
-                                  'assets/images/card.png',
-                                  width: widthWithScreenRatio(context, 0.04),
-                                ),
-                              ),
-                            ),
-                          Positioned(
-                            left: widthWithScreenRatio(context, 0),
-                            top: heightWithScreenRatio(context, 0.06),
-                            child: Container(
-                              width: widthWithScreenRatio(context, 0.056),
-                              height: widthWithScreenRatio(context, 0.056),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(100)),
-                              alignment: Alignment.center,
-                              child: Image.asset(
-                                'assets/images/bot.png',
-                                width: widthWithScreenRatio(context, 0.04),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    horizontalBotWithCard(
+                        leftForFirstCard: 0.034,
+                        topForFirstCard: 0.005,
+                        leftForSecondCard: 0.042,
+                        topForSecondCard: 0.01,
+                        angleForFirstCard: 30,
+                        angleForSecondCard: 50,
+                        leftForBot: 0,
+                        topForBot: 0.085),
                     Spacing().verticalSpaceWithRatio(context, 0.01),
                     PlayerIdentity(
                         context: context, width: 0.08, title: '', bits: 3)
@@ -433,15 +252,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         splashColor: Colors.green,
                                         onTap: () {
                                           setState(() {
-                                            firstPlayerCard = cardsList[random
-                                                    .nextInt(cardsList.length)]
-                                                .card;
-                                            secondPlayerCard = cardsList[random
-                                                    .nextInt(cardsList.length)]
-                                                .card;
-                                            thirdPlayerCard = cardsList[random
-                                                    .nextInt(cardsList.length)]
-                                                .card;
+                                            firstPlayerCall = 2000 +
+                                                random.nextInt(2500 - 2000);
+                                            highestCall = firstPlayerCall;
                                           });
                                           context
                                               .read<StartGameCubit>()
@@ -449,7 +262,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                           context
                                               .read<WinGameCubit>()
                                               .toggleState(false);
-                                          startFirstPlayerAnimation(context);
+                                          setUserCall(
+                                              name: 'firstPlayer',
+                                              isCalled: true,
+                                              isRaised: false,
+                                              price: firstPlayerCall);
+                                          Future.delayed(Duration(seconds: 2))
+                                              .then((value) => context
+                                                  .read<
+                                                      ShowUserCallOptionsCubit>()
+                                                  .toggleState(true));
                                         },
                                         child: startGameOption(
                                             'YES', Colors.green)),
@@ -463,7 +285,36 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       );
                     } else {
                       return Stack(children: [
-                        if (cardVisibilty[2])
+                        if (hasUserCalledWithCall('thirdPlayer') ||
+                            hasUserCalledWithRaise('thirdPlayer'))
+                          callLabel(
+                              top: 0.2,
+                              left: 0,
+                              color: callLabelColor,
+                              title: getUserCallPrice('thirdPlayer')),
+                        if (hasUserCalledWithCall('thirdPlayer'))
+                          callTag(
+                              top: 0.09,
+                              left: 0,
+                              color: Colors.red,
+                              title: 'CALL'),
+                        if (hasUserCalledWithRaise('thirdPlayer'))
+                          callTag(
+                              top: 0.09,
+                              left: 0,
+                              color: Colors.red,
+                              title: 'RAISE'),
+                        callTag(
+                            top: 0.09,
+                            left: 0.32,
+                            color: Colors.red,
+                            title: 'HIGH'),
+                        callLabel(
+                            top: 0.2,
+                            left: 0.35,
+                            color: Color.fromARGB(255, 206, 152, 170),
+                            title: '$highestCall'),
+                        if (cardVisibilty[0])
                           AnimatedBuilder(
                             animation: thirdPlayerController,
                             builder: (context, child) {
@@ -473,167 +324,219 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     .get(AnimProps.left),
                                 child: Transform.rotate(
                                   angle: 90 / 180 * pi,
-                                  child: bottomCardWidget(
-                                      context, thirdPlayerCard),
+                                  child: bottomCardWidget(context, thirdCard),
                                 ),
                               );
                             },
                           ),
-                        if (cardVisibilty[1])
-                          AnimatedBuilder(
-                            animation: secondPlayerController,
-                            builder: (context, child) {
-                              return Positioned(
-                                bottom: secondPlayerAnimation.value
-                                    .get(AnimProps.top),
-                                left: widthWithScreenRatio(context, 0.334),
-                                child:
-                                    bottomCardWidget(context, secondPlayerCard),
-                              );
-                            },
-                          ),
-                        if (cardVisibilty[0])
-                          AnimatedBuilder(
-                            animation: firstPlayerController,
-                            builder: (context, child) {
-                              return Positioned(
-                                top: heightWithScreenRatio(context, 0.135),
-                                right: firstPlayerAnimation.value
-                                    .get(AnimProps.left),
-                                child: Transform.rotate(
-                                  angle: 90 / 180 * pi,
-                                  child: bottomCardWidget(
-                                      context, firstPlayerCard),
-                                ),
-                              );
-                            },
-                          ),
-                        if (cardVisibilty[3])
-                          AnimatedBuilder(
-                            animation: userController,
-                            builder: (context, child) {
-                              return Positioned(
-                                  top: userAnimation.value.get(AnimProps.top),
-                                  right: widthWithScreenRatio(context, 0.34),
-                                  child: bottomCardWidget(
-                                      context, selectedCard.card));
-                            },
-                          ),
+                        if (hasUserCalledWithCall('firstPlayer') ||
+                            hasUserCalledWithRaise('firstPlayer'))
+                          callLabel(
+                              top: 0.2,
+                              left: 0.68,
+                              color: callLabelColor,
+                              title: getUserCallPrice('firstPlayer')),
+                        if (hasUserCalledWithCall('firstPlayer'))
+                          callTag(
+                              top: 0.09,
+                              left: 0.68,
+                              color: Colors.red,
+                              title: 'CALL'),
+                        if (hasUserCalledWithRaise('firstPlayer'))
+                          callTag(
+                              top: 0.09,
+                              left: 0.68,
+                              color: Colors.red,
+                              title: 'RAISE')
                       ]);
                     }
                   }()),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    PlayerIdentity(
-                        context: context, width: 0.09, title: 'bot3', bits: 0),
-                    Spacing().verticalSpaceWithRatio(context, 0.01),
-                    Container(
-                      width: widthWithScreenRatio(context, 0.12),
-                      height: heightWithScreenRatio(context, 0.24),
-                      child: Stack(
-                        children: [
-                          for (var i = 0.035; i > 0.01; i -= 0.006)
-                            Positioned(
-                              left: widthWithScreenRatio(context, 0.03),
-                              top: widthWithScreenRatio(context, i),
-                              child: Transform.rotate(
-                                angle: -40 / 180 * pi,
-                                child: Image.asset(
-                                  'assets/images/card.png',
-                                  width: widthWithScreenRatio(context, 0.04),
-                                ),
-                              ),
-                            ),
-                          Positioned(
-                            right: widthWithScreenRatio(context, 0),
-                            top: heightWithScreenRatio(context, 0.06),
-                            child: Container(
-                              width: widthWithScreenRatio(context, 0.056),
-                              height: widthWithScreenRatio(context, 0.056),
-                              decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  borderRadius: BorderRadius.circular(100)),
-                              alignment: Alignment.center,
-                              child: Image.asset(
-                                'assets/images/bot.png',
-                                width: widthWithScreenRatio(context, 0.04),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Spacing().verticalSpaceWithRatio(context, 0.01),
-                    PlayerIdentity(
-                        context: context, width: 0.08, title: '', bits: 1)
-                  ],
+                Container(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      PlayerIdentity(
+                          context: context,
+                          width: 0.09,
+                          title: 'bot3',
+                          bits: 0),
+                      Spacing().verticalSpaceWithRatio(context, 0.01),
+                      horizontalBotWithCard(
+                          rightForFirstCard: 0.034,
+                          topForFirstCard: 0.005,
+                          rightForSecondCard: 0.042,
+                          topForSecondCard: 0.01,
+                          angleForFirstCard: 30,
+                          angleForSecondCard: 50,
+                          rightForBot: 0,
+                          topForBot: 0.085),
+                      Spacing().verticalSpaceWithRatio(context, 0.01),
+                      PlayerIdentity(
+                          context: context, width: 0.08, title: '', bits: 1)
+                    ],
+                  ),
                 )
               ]),
-              Stack(
-                children: [
-                  AnimatedContainer(
-                    duration: Duration(seconds: 1),
-                    width: screenWidth(context),
-                    height: widthWithScreenRatio(context, 0.11),
-                    alignment: Alignment.bottomCenter,
-                    child: Row(
+              Container(
+                height: heightWithScreenRatio(context, 0.2),
+                child: Stack(
+                  children: [
+                    Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ...cardsList.map(
-                          (e) => GestureDetector(
-                            onTap: () {
-                              context.read<SelectedCardCubit>().selectCard(e);
-                              context.read<CardsSelectCubit>().removeCard(e);
-                              context
-                                  .read<CardVisibilityCubit>()
-                                  .toggleVisibility([true, true, true, true]);
-                              startUserAnimation(context);
-                            },
-                            child: bottomCardWidget(
-                              context,
-                              e.card,
-                            ),
-                          ),
-                        ),
+                        Container(
+                            width: widthWithScreenRatio(context, 0.2),
+                            height: widthWithScreenRatio(context, 0.11),
+                            alignment: Alignment.bottomCenter,
+                            child: PlayerIdentity(
+                                context: context,
+                                width: 0.2,
+                                title: 'user',
+                                bits: 0)),
                       ],
                     ),
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    Positioned(
+                      left: widthWithScreenRatio(context, 0.41),
+                      bottom: heightWithScreenRatio(context, 0.01),
+                      child: verticalBotWithCard(
+                          leftForFirstCard: 0.072,
+                          bottomForFirstCard: 0.006,
+                          angleForFirstCard: -10,
+                          leftForSecondCard: 0.084,
+                          bottomForSecondCard: 0.006,
+                          angleForSecondCard: 20,
+                          leftForBot: 0.09,
+                          bottomForBot: 0),
+                    ),
+                    if (showUserCallOptions)
                       Container(
-                          width: widthWithScreenRatio(context, 0.2),
-                          height: widthWithScreenRatio(context, 0.11),
-                          alignment: Alignment.bottomCenter,
-                          child: PlayerIdentity(
-                              context: context,
-                              width: 0.2,
-                              title: 'user',
-                              bits: 0)),
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Padding(
-                        padding: EdgeInsets.only(
-                            left: widthWithScreenRatio(context, 0.054),
-                            top: widthWithScreenRatio(context, 0.045)),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          radius: widthWithScreenRatio(context, 0.03),
-                          child: Icon(
-                            Icons.person,
-                            size: widthWithScreenRatio(context, 0.04),
-                            color: Color.fromARGB(255, 141, 138, 138),
-                          ),
-                        ),
+                        width: widthWithScreenRatio(context, 1),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: callOptions(
+                                    color: Colors.red, title: 'FOLD'),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                    onTap: () {
+                                      setUserCall(
+                                          name: 'user',
+                                          isCalled: true,
+                                          isRaised: false,
+                                          price: highestCall);
+                                      context
+                                          .read<ShowUserCallOptionsCubit>()
+                                          .toggleState(false);
+                                      Future.delayed(Duration(seconds: 1)).then(
+                                        (value) => setUserCall(
+                                            name: 'thirdPlayer',
+                                            isCalled: true,
+                                            isRaised: false,
+                                            price: highestCall),
+                                      );
+                                      Future.delayed(Duration(seconds: 2)).then(
+                                          (value) => setUserCall(
+                                              name: 'fourthPlayer',
+                                              isCalled: true,
+                                              isRaised: false,
+                                              price: highestCall));
+                                    },
+                                    child: callOptions(
+                                        color: Colors.blue, title: 'CALL')),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                    onTap: () {
+                                      context
+                                          .read<ShowUserCallOptionsCubit>()
+                                          .toggleState(false);
+                                      context
+                                          .read<ShowRaisedPricesCubit>()
+                                          .toggleState(true);
+                                    },
+                                    child: callOptions(
+                                        color: Colors.green, title: 'RAISE')),
+                              ),
+                            ]),
                       ),
-                    ],
-                  )
-                ],
+                    if (hasUserCalledWithCall('user') ||
+                        hasUserCalledWithRaise('user'))
+                      callLabel(
+                          top: 0.02,
+                          left: 0.43,
+                          color: callLabelColor,
+                          title: getUserCallPrice('user')),
+                    if (hasUserCalledWithCall('user'))
+                      callTag(
+                          top: 0.06,
+                          left: 0.36,
+                          color: Colors.red,
+                          title: 'CALL'),
+                    if (hasUserCalledWithRaise('user'))
+                      callTag(
+                          top: 0.06,
+                          left: 0.36,
+                          color: Colors.red,
+                          title: 'RAISE'),
+                    if (showRaisedPrices)
+                      Container(
+                        width: widthWithScreenRatio(context, 1),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ...List.generate(
+                                  4,
+                                  (index) => Padding(
+                                        padding: const EdgeInsets.all(8.0),
+                                        child: GestureDetector(
+                                          onTap: () {
+                                            setState(() {
+                                              highestCall =
+                                                  highestCall + index + 1;
+                                              secondPlayerCall = highestCall;
+                                            });
+                                            print(highestCall);
+
+                                            setUserCall(
+                                                name: 'user',
+                                                isCalled: false,
+                                                isRaised: true,
+                                                price: secondPlayerCall);
+                                            context
+                                                .read<ShowRaisedPricesCubit>()
+                                                .toggleState(false);
+
+                                            Future.delayed(Duration(seconds: 1))
+                                                .then(
+                                              (value) => setUserCall(
+                                                  name: 'thirdPlayer',
+                                                  isCalled: true,
+                                                  isRaised: false,
+                                                  price: secondPlayerCall),
+                                            );
+                                            Future.delayed(Duration(seconds: 2))
+                                                .then((value) => setUserCall(
+                                                    name: 'fourthPlayer',
+                                                    isCalled: true,
+                                                    isRaised: false,
+                                                    price: secondPlayerCall));
+                                          },
+                                          child: callOptions(
+                                              color: Colors.green,
+                                              title:
+                                                  '${firstPlayerCall + index + 1}'),
+                                        ),
+                                      ))
+                            ]),
+                      )
+                  ],
+                ),
               )
             ],
           ),
@@ -641,6 +544,282 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  Widget callTag(
+          {required double top,
+          required double left,
+          required Color color,
+          required String title}) =>
+      Positioned(
+          top: heightWithScreenRatio(context, top),
+          left: widthWithScreenRatio(context, left),
+          child: Container(
+            decoration: BoxDecoration(
+                color: color, borderRadius: BorderRadius.circular(10)),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Text(
+                title,
+                style: TextStyle(color: Colors.white, fontSize: 11),
+              ),
+            ),
+          ));
+
+  Widget callOptions({required Color color, required String title}) =>
+      Container(
+          decoration: BoxDecoration(
+              color: color, borderRadius: BorderRadius.circular(10)),
+          child: Padding(
+            padding: EdgeInsets.all(heightWithScreenRatio(context, 0.02)),
+            child: Text(
+              title,
+              style: TextStyle(color: Colors.white),
+            ),
+          ));
+
+  Widget callLabel(
+          {required double top,
+          required double left,
+          required Color color,
+          required String title}) =>
+      Positioned(
+          top: heightWithScreenRatio(context, top),
+          left: widthWithScreenRatio(context, left),
+          child: Container(
+              decoration: BoxDecoration(
+                  color: color,
+                  border: Border.all(color: color),
+                  borderRadius: BorderRadius.circular(10)),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                    vertical: heightWithScreenRatio(
+                      context,
+                      0.01,
+                    ),
+                    horizontal: widthWithScreenRatio(context, 0.01)),
+                child: Text(
+                  title,
+                  style: TextStyle(color: Colors.white),
+                ),
+              )));
+
+  Widget horizontalBotWithCard({
+    double? leftForFirstCard,
+    double? topForFirstCard,
+    double? leftForSecondCard,
+    double? topForSecondCard,
+    double? angleForFirstCard,
+    double? angleForSecondCard,
+    double? leftForBot,
+    double? topForBot,
+    double? rightForFirstCard,
+    double? rightForSecondCard,
+    double? rightForBot,
+  }) =>
+      rightForFirstCard != null
+          ? Container(
+              width: widthWithScreenRatio(context, 0.12),
+              height: heightWithScreenRatio(context, 0.24),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: widthWithScreenRatio(context, 0.034),
+                    top: widthWithScreenRatio(context, 0.005),
+                    child: Transform.rotate(
+                      angle: -30 / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: widthWithScreenRatio(context, 0.042),
+                    top: widthWithScreenRatio(context, 0.01),
+                    child: Transform.rotate(
+                      angle: -50 / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: widthWithScreenRatio(context, 0),
+                    top: heightWithScreenRatio(context, 0.085),
+                    child: Container(
+                      width: widthWithScreenRatio(context, 0.056),
+                      height: widthWithScreenRatio(context, 0.056),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(100)),
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/bot.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              width: widthWithScreenRatio(context, 0.12),
+              height: heightWithScreenRatio(context, 0.24),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForFirstCard!),
+                    top: widthWithScreenRatio(context, topForFirstCard!),
+                    child: Transform.rotate(
+                      angle: angleForFirstCard! / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForSecondCard!),
+                    top: widthWithScreenRatio(context, topForSecondCard!),
+                    child: Transform.rotate(
+                      angle: angleForSecondCard! / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForBot!),
+                    top: heightWithScreenRatio(context, topForBot!),
+                    child: Container(
+                      width: widthWithScreenRatio(context, 0.056),
+                      height: widthWithScreenRatio(context, 0.056),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(100)),
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/bot.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+
+  Widget verticalBotWithCard({
+    double? leftForFirstCard,
+    double? topForFirstCard,
+    double? leftForSecondCard,
+    double? topForSecondCard,
+    double? angleForFirstCard,
+    double? angleForSecondCard,
+    double? leftForBot,
+    double? topForBot,
+    double? bottomForFirstCard,
+    double? bottomForSecondCard,
+    double? bottomForBot,
+  }) =>
+      bottomForFirstCard != null
+          ? Container(
+              width: widthWithScreenRatio(context, 0.16),
+              height: heightWithScreenRatio(context, 0.235),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForFirstCard!),
+                    bottom: widthWithScreenRatio(context, bottomForFirstCard!),
+                    child: Transform.rotate(
+                      angle: angleForFirstCard! / 180 * pi,
+                      child: Container(
+                        width: widthWithScreenRatio(context, 0.08),
+                        height: widthWithScreenRatio(context, 0.08),
+                        alignment: Alignment.center,
+                        child: PlayingCardView(
+                          card: PlayingCard(Suit.clubs, CardValue.ace),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForSecondCard!),
+                    bottom: widthWithScreenRatio(context, bottomForSecondCard!),
+                    child: Transform.rotate(
+                      angle: angleForSecondCard! / 180 * pi,
+                      child: Container(
+                        width: widthWithScreenRatio(context, 0.08),
+                        height: widthWithScreenRatio(context, 0.08),
+                        alignment: Alignment.center,
+                        child: PlayingCardView(
+                          card: PlayingCard(Suit.clubs, CardValue.queen),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForBot!),
+                    bottom: heightWithScreenRatio(context, bottomForBot!),
+                    child: CircleAvatar(
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.person,
+                        color: Color.fromARGB(255, 160, 157, 157),
+                        size: widthWithScreenRatio(context, 0.05),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Container(
+              width: widthWithScreenRatio(context, 0.16),
+              height: heightWithScreenRatio(context, 0.235),
+              child: Stack(
+                children: [
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForFirstCard!),
+                    top: widthWithScreenRatio(context, topForFirstCard!),
+                    child: Transform.rotate(
+                      angle: angleForFirstCard! / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForSecondCard!),
+                    top: widthWithScreenRatio(context, topForSecondCard!),
+                    child: Transform.rotate(
+                      angle: angleForSecondCard! / 180 * pi,
+                      child: Image.asset(
+                        'assets/images/card.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: widthWithScreenRatio(context, leftForBot!),
+                    top: heightWithScreenRatio(context, topForBot!),
+                    child: Container(
+                      width: widthWithScreenRatio(context, 0.056),
+                      height: widthWithScreenRatio(context, 0.056),
+                      decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(100)),
+                      alignment: Alignment.center,
+                      child: Image.asset(
+                        'assets/images/bot.png',
+                        width: widthWithScreenRatio(context, 0.04),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
 
   Widget startGameOption(String title, Color color) => Container(
         decoration: BoxDecoration(
@@ -773,31 +952,10 @@ final cardListForSelection = [
   )),
 ];
 
-class CardsSelectCubit extends Cubit<List<PlayingCardView>> {
-  CardsSelectCubit() : super(cardListForSelection);
-  void removeCard(PlayingCardView cardView) {
-    final cardList = [];
-    for (var element in state) {
-      if (element != cardView) {
-        cardList.add(element);
-      }
-    }
-    emit([...cardList]);
-  }
-
-  void resetCard() => emit(cardListForSelection);
-}
-
 class CardVisibilityCubit extends Cubit<List<bool>> {
   CardVisibilityCubit() : super([false, false, false, false]);
   void toggleVisibility(List<bool> status) => emit(status);
   void resetVisibility() => emit([false, false, false, false]);
-}
-
-class SelectedCardCubit extends Cubit<PlayingCardView> {
-  SelectedCardCubit()
-      : super(PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)));
-  void selectCard(PlayingCardView cardView) => emit(cardView);
 }
 
 class StartGameCubit extends Cubit<bool> {
@@ -807,5 +965,32 @@ class StartGameCubit extends Cubit<bool> {
 
 class WinGameCubit extends Cubit<bool> {
   WinGameCubit() : super(false);
+  void toggleState(bool status) => emit(status);
+}
+
+class UserCall {
+  String user;
+  bool isCall;
+  bool isRaised;
+  int price;
+  UserCall(
+      {required this.user,
+      required this.isCall,
+      required this.isRaised,
+      required this.price});
+}
+
+class ShowUserCallCubit extends Cubit<List<UserCall>> {
+  ShowUserCallCubit() : super([]);
+  void setUserCall(UserCall userCall) => emit([...state, userCall]);
+}
+
+class ShowUserCallOptionsCubit extends Cubit<bool> {
+  ShowUserCallOptionsCubit() : super(false);
+  void toggleState(bool status) => emit(status);
+}
+
+class ShowRaisedPricesCubit extends Cubit<bool> {
+  ShowRaisedPricesCubit() : super(false);
   void toggleState(bool status) => emit(status);
 }
