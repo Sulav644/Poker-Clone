@@ -112,26 +112,164 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final isWinGame = context.watch<WinGameCubit>().state;
     final cardVisibilty = context.watch<CardVisibilityCubit>().state;
     final showStartGameDialog = context.watch<StartGameCubit>().state;
-    final userCallList = context.watch<ShowUserCallCubit>().state;
+    final userCallList = context.watch<UserCallListCubit>().state;
     final showUserCallOptions = context.watch<ShowUserCallOptionsCubit>().state;
     final showRaisedPrices = context.watch<ShowRaisedPricesCubit>().state;
+    final betState = context.watch<SetUserBetCubit>().state;
+    final totalBid = context.watch<TotalBidPriceCubit>().state;
+    final hasFirstPlayerRecheck =
+        context.watch<FirstPlayerRecheckStatusCubit>().state;
+    final isGeneratedRandomCard =
+        context.watch<IsGeneratedRandomCardCubit>().state;
+    if (!isGeneratedRandomCard) {
+      List<int> cardsList = [];
+      for (var i = 0; i < 13; i++) {
+        final randomCard = random.nextInt(13);
+        cardsList.add(randomCard);
+      }
+      context.read<RandomCardsGeneratorCubit>().generateRandomCards(cardsList);
+      context.read<IsGeneratedRandomCardCubit>().toggleState();
+    }
+    void setUserCall(
+            {required String name,
+            required BetState bet,
+            required int price,
+            required List<int> cardIndex}) =>
+        context.read<UserCallListCubit>().setUserCall(
+            UserCall(user: name, bet: bet, cardIndex: cardIndex, price: price));
+
+    void startFromFirstPlayer() {
+      if (betState == BetState.call) {
+        setState(() {
+          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
+        });
+      } else if (betState == BetState.fold) {
+        setState(() {
+          firstPlayerCall = 0;
+        });
+      } else if (betState == BetState.raise) {
+        setState(() {
+          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
+        });
+      } else {
+        setState(() {
+          firstPlayerCall = 0;
+        });
+      }
+      if (firstPlayerCall != 0) {
+        highestCall = firstPlayerCall;
+      } else {
+        highestCall = 2344;
+      }
+      context.read<TotalBidPriceCubit>().addBid(firstPlayerCall);
+      context.read<StartGameCubit>().toggleState(true);
+      context.read<WinGameCubit>().toggleState(false);
+
+      print(betState);
+      setUserCall(
+          name: 'firstPlayer',
+          bet: betState,
+          cardIndex: [0, 1],
+          price: firstPlayerCall);
+      context.read<TurnRoundCubit>().movieRound();
+      if (betState == BetState.recheck)
+        context.read<FirstPlayerRecheckStatusCubit>().toggleState();
+      Future.delayed(Duration(seconds: 2)).then((value) =>
+          context.read<ShowUserCallOptionsCubit>().toggleState(true));
+    }
+
+    void startFromThirdPlayer() {
+      context.read<SetUserBetCubit>().toggleState(
+          BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
+      Future.delayed(Duration(seconds: 1)).then(
+        (value) => setUserCall(
+            name: 'thirdPlayer',
+            bet: betState,
+            cardIndex: [0, 1],
+            price: (() {
+              if (betState == BetState.call) {
+                context.read<TurnRoundCubit>().movieRound();
+                context.read<TotalBidPriceCubit>().addBid(highestCall);
+                return highestCall;
+              } else if (betState == BetState.fold) {
+                context.read<TurnRoundCubit>().movieRound();
+                context.read<TotalBidPriceCubit>().addBid(0);
+                return 0;
+              } else if (betState == BetState.raise) {
+                context.read<TurnRoundCubit>().movieRound();
+                setState(() {
+                  thirdPlayerCall =
+                      highestCall + random.nextInt(3000 - highestCall);
+                });
+
+                context.read<TotalBidPriceCubit>().addBid(thirdPlayerCall);
+                return thirdPlayerCall;
+              } else {
+                context.read<TurnRoundCubit>().movieRound();
+                context.read<TotalBidPriceCubit>().addBid(0);
+                return 0;
+              }
+            }())),
+      );
+    }
+
+    void startFromFourthPlayer() {
+      context.read<SetUserBetCubit>().toggleState(
+          BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
+      Future.delayed(Duration(seconds: 2)).then((value) => setUserCall(
+          name: 'fourthPlayer',
+          bet: betState,
+          cardIndex: [0, 1],
+          price: (() {
+            if (betState == BetState.call) {
+              context.read<TurnRoundCubit>().movieRound();
+              context.read<TotalBidPriceCubit>().addBid(highestCall);
+              return highestCall;
+            } else if (betState == BetState.fold) {
+              context.read<TurnRoundCubit>().movieRound();
+              context.read<TotalBidPriceCubit>().addBid(0);
+              return 0;
+            } else if (betState == BetState.raise) {
+              context.read<TurnRoundCubit>().movieRound();
+              setState(() {
+                fourthPlayerCall =
+                    highestCall + random.nextInt(3000 - highestCall);
+              });
+
+              context.read<TotalBidPriceCubit>().addBid(fourthPlayerCall);
+              return fourthPlayerCall;
+            } else {
+              context.read<TurnRoundCubit>().movieRound();
+              context.read<TotalBidPriceCubit>().addBid(0);
+              return 0;
+            }
+          }())));
+    }
+
+    void startFromUser(
+        {required BetState bet, required int price, required int bid}) {
+      setUserCall(name: 'user', bet: bet, cardIndex: [0, 1], price: price);
+      context.read<TurnRoundCubit>().movieRound();
+      context.read<TotalBidPriceCubit>().addBid(bid);
+      context.read<ShowUserCallOptionsCubit>().toggleState(false);
+    }
+
+    final turnRoundState = context.watch<TurnRoundCubit>().state;
+
+    print(turnRoundState);
+
+    context
+        .read<SetUserBetCubit>()
+        .toggleState(BetState.values[random.nextInt(4)]);
     String getUserCallPrice(String title) => userCallList[
             userCallList.indexWhere((element) => element.user == title)]
         .price
         .toString();
-    bool hasUserCalledWithCall(String title) => userCallList
-        .where((element) => element.user == title && element.isCall == true)
-        .isNotEmpty;
-    bool hasUserCalledWithRaise(String title) => userCallList
-        .where((element) => element.user == title && element.isRaised == true)
-        .isNotEmpty;
-    void setUserCall(
-            {required String name,
-            required bool isCalled,
-            required bool isRaised,
-            required int price}) =>
-        context.read<ShowUserCallCubit>().setUserCall(UserCall(
-            user: name, isCall: isCalled, isRaised: isRaised, price: price));
+    bool hasUserCalled(String title) =>
+        userCallList.where((element) => element.user == title).isNotEmpty;
+    BetState userBetState(String title) => userCallList[
+            userCallList.indexWhere((element) => element.user == title)]
+        .bet;
 
     return Scaffold(
       body: Stack(
@@ -171,25 +309,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               angleForSecondCard: -24,
                               leftForBot: 0.089,
                               topForBot: 0),
-                          if (hasUserCalledWithCall('fourthPlayer') ||
-                              hasUserCalledWithRaise('fourthPlayer'))
-                            callLabel(
-                                top: 0.15,
-                                left: 0.04,
-                                color: callLabelColor,
-                                title: getUserCallPrice('fourthPlayer')),
-                          if (hasUserCalledWithCall('fourthPlayer'))
-                            callTag(
-                                top: 0.08,
-                                left: 0,
-                                color: Colors.red,
-                                title: 'CALL'),
-                          if (hasUserCalledWithRaise('fourthPlayer'))
-                            callTag(
-                                top: 0.08,
-                                left: 0,
-                                color: Colors.red,
-                                title: 'RAISE')
+                          Column(children: [
+                            Spacing().verticalSpaceWithRatio(context, 0.08),
+                            if (hasUserCalled('fourthPlayer') &&
+                                userBetState('fourthPlayer') == BetState.call)
+                              callTag(color: Colors.red, title: 'CALL'),
+                            if (hasUserCalled('fourthPlayer') &&
+                                userBetState('fourthPlayer') == BetState.raise)
+                              callTag(color: Colors.red, title: 'RAISE'),
+                            if (hasUserCalled('fourthPlayer') &&
+                                userBetState('fourthPlayer') == BetState.fold)
+                              callTag(color: Colors.red, title: 'FOLD'),
+                            if (hasUserCalled('fourthPlayer') &&
+                                userBetState('fourthPlayer') ==
+                                    BetState.recheck)
+                              callTag(color: Colors.red, title: 'RECHECk'),
+                            Spacing().verticalSpaceWithRatio(context, 0.02),
+                            if (hasUserCalled('fourthPlayer') &&
+                                userBetState('fourthPlayer') != BetState.fold &&
+                                userBetState('fourthPlayer') !=
+                                    BetState.recheck)
+                              callLabel(
+                                  color: callLabelColor,
+                                  title: getUserCallPrice('fourthPlayer')),
+                          ]),
                         ],
                       )),
                   SettingsWidgets(),
@@ -250,29 +393,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     borderRadius: BorderRadius.circular(10),
                                     child: InkWell(
                                         splashColor: Colors.green,
-                                        onTap: () {
-                                          setState(() {
-                                            firstPlayerCall = 2000 +
-                                                random.nextInt(2500 - 2000);
-                                            highestCall = firstPlayerCall;
-                                          });
-                                          context
-                                              .read<StartGameCubit>()
-                                              .toggleState(true);
-                                          context
-                                              .read<WinGameCubit>()
-                                              .toggleState(false);
-                                          setUserCall(
-                                              name: 'firstPlayer',
-                                              isCalled: true,
-                                              isRaised: false,
-                                              price: firstPlayerCall);
-                                          Future.delayed(Duration(seconds: 2))
-                                              .then((value) => context
-                                                  .read<
-                                                      ShowUserCallOptionsCubit>()
-                                                  .toggleState(true));
-                                        },
+                                        onTap: () => startFromFirstPlayer(),
                                         child: startGameOption(
                                             'YES', Colors.green)),
                                   ),
@@ -284,71 +405,162 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             ]),
                       );
                     } else {
-                      return Stack(children: [
-                        if (hasUserCalledWithCall('thirdPlayer') ||
-                            hasUserCalledWithRaise('thirdPlayer'))
-                          callLabel(
-                              top: 0.2,
-                              left: 0,
-                              color: callLabelColor,
-                              title: getUserCallPrice('thirdPlayer')),
-                        if (hasUserCalledWithCall('thirdPlayer'))
-                          callTag(
-                              top: 0.09,
-                              left: 0,
-                              color: Colors.red,
-                              title: 'CALL'),
-                        if (hasUserCalledWithRaise('thirdPlayer'))
-                          callTag(
-                              top: 0.09,
-                              left: 0,
-                              color: Colors.red,
-                              title: 'RAISE'),
-                        callTag(
-                            top: 0.09,
-                            left: 0.32,
-                            color: Colors.red,
-                            title: 'HIGH'),
-                        callLabel(
-                            top: 0.2,
-                            left: 0.35,
-                            color: Color.fromARGB(255, 206, 152, 170),
-                            title: '$highestCall'),
-                        if (cardVisibilty[0])
-                          AnimatedBuilder(
-                            animation: thirdPlayerController,
-                            builder: (context, child) {
-                              return Positioned(
-                                top: heightWithScreenRatio(context, 0.135),
-                                left: thirdPlayerAnimation.value
-                                    .get(AnimProps.left),
-                                child: Transform.rotate(
-                                  angle: 90 / 180 * pi,
-                                  child: bottomCardWidget(context, thirdCard),
+                      return Column(
+                        children: [
+                          Spacing().verticalSpaceWithRatio(context, 0.05),
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              children: [
+                                Container(
+                                  width: widthWithScreenRatio(context, 0.1),
+                                  height: heightWithScreenRatio(context, 0.4),
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        if (hasUserCalled('thirdPlayer') &&
+                                            userBetState('thirdPlayer') ==
+                                                BetState.call)
+                                          callTag(
+                                              color: Colors.red, title: 'CALL'),
+                                        if (hasUserCalled('thirdPlayer') &&
+                                            userBetState('thirdPlayer') ==
+                                                BetState.raise)
+                                          callTag(
+                                              color: Colors.red,
+                                              title: 'RAISE'),
+                                        if (hasUserCalled('thirdPlayer') &&
+                                            userBetState('thirdPlayer') ==
+                                                BetState.fold)
+                                          callTag(
+                                              color: Colors.red, title: 'FOLD'),
+                                        if (hasUserCalled('thirdPlayer') &&
+                                            userBetState('thirdPlayer') ==
+                                                BetState.recheck)
+                                          callTag(
+                                              color: Colors.red,
+                                              title: 'RECHECK'),
+                                        Spacing().verticalSpaceWithRatio(
+                                            context, 0.02),
+                                        if (hasUserCalled('thirdPlayer') &&
+                                            userBetState('thirdPlayer') !=
+                                                BetState.fold &&
+                                            userBetState('thirdPlayer') !=
+                                                BetState.recheck)
+                                          callLabel(
+                                              color: callLabelColor,
+                                              title: getUserCallPrice(
+                                                  'thirdPlayer')),
+                                      ]),
                                 ),
-                              );
-                            },
-                          ),
-                        if (hasUserCalledWithCall('firstPlayer') ||
-                            hasUserCalledWithRaise('firstPlayer'))
-                          callLabel(
-                              top: 0.2,
-                              left: 0.68,
-                              color: callLabelColor,
-                              title: getUserCallPrice('firstPlayer')),
-                        if (hasUserCalledWithCall('firstPlayer'))
-                          callTag(
-                              top: 0.09,
-                              left: 0.68,
-                              color: Colors.red,
-                              title: 'CALL'),
-                        if (hasUserCalledWithRaise('firstPlayer'))
-                          callTag(
-                              top: 0.09,
-                              left: 0.68,
-                              color: Colors.red,
-                              title: 'RAISE')
-                      ]);
+                                Column(children: [
+                                  callTag(color: Colors.red, title: 'HIGH'),
+                                  Spacing()
+                                      .verticalSpaceWithRatio(context, 0.02),
+                                  callLabel(
+                                      color: Color.fromARGB(255, 206, 152, 170),
+                                      title: '$totalBid'),
+                                  if (cardVisibilty[0])
+                                    AnimatedBuilder(
+                                      animation: thirdPlayerController,
+                                      builder: (context, child) {
+                                        return Positioned(
+                                          top: heightWithScreenRatio(
+                                              context, 0.135),
+                                          left: thirdPlayerAnimation.value
+                                              .get(AnimProps.left),
+                                          child: Transform.rotate(
+                                            angle: 90 / 180 * pi,
+                                            child: bottomCardWidget(
+                                                context, thirdCard),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  Spacing()
+                                      .verticalSpaceWithRatio(context, 0.04),
+                                  Row(
+                                    children: [
+                                      if (turnRoundState > 3)
+                                        Container(
+                                          width: widthWithScreenRatio(
+                                              context, 0.06),
+                                          alignment: Alignment.center,
+                                          child: PlayingCardView(
+                                              card: PlayingCard(
+                                                  Suit.clubs, CardValue.ace)),
+                                        ),
+                                      if (turnRoundState > 3)
+                                        Container(
+                                          width: widthWithScreenRatio(
+                                              context, 0.06),
+                                          alignment: Alignment.center,
+                                          child: PlayingCardView(
+                                              card: PlayingCard(
+                                                  Suit.spades, CardValue.five)),
+                                        ),
+                                      if (turnRoundState > 3)
+                                        Container(
+                                          width: widthWithScreenRatio(
+                                              context, 0.06),
+                                          alignment: Alignment.center,
+                                          child: PlayingCardView(
+                                              card: PlayingCard(Suit.diamonds,
+                                                  CardValue.queen)),
+                                        ),
+                                    ],
+                                  ),
+                                ]),
+                                Container(
+                                  width: widthWithScreenRatio(context, 0.1),
+                                  height: heightWithScreenRatio(context, 0.4),
+                                  child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: [
+                                        if (hasUserCalled('firstPlayer') &&
+                                            userBetState('firstPlayer') ==
+                                                BetState.call)
+                                          callTag(
+                                              color: Colors.red, title: 'CALL'),
+                                        if (hasUserCalled('firstPlayer') &&
+                                            userBetState('firstPlayer') ==
+                                                BetState.raise)
+                                          callTag(
+                                              color: Colors.red,
+                                              title: 'RAISE'),
+                                        if (hasUserCalled('firstPlayer') &&
+                                            userBetState('firstPlayer') ==
+                                                BetState.fold)
+                                          callTag(
+                                              color: Colors.red, title: 'FOLD'),
+                                        if (hasUserCalled('firstPlayer') &&
+                                            userBetState('firstPlayer') ==
+                                                BetState.recheck)
+                                          callTag(
+                                              color: Colors.red,
+                                              title: 'RECHECK'),
+                                        Spacing().verticalSpaceWithRatio(
+                                            context, 0.02),
+                                        if (hasUserCalled('firstPlayer') &&
+                                            userBetState('firstPlayer') !=
+                                                BetState.fold &&
+                                            userBetState('firstPlayer') !=
+                                                BetState.recheck)
+                                          callLabel(
+                                              color: callLabelColor,
+                                              title: getUserCallPrice(
+                                                  'firstPlayer')),
+                                      ]),
+                                )
+                              ]),
+                        ],
+                      );
                     }
                   }()),
                 ),
@@ -417,34 +629,27 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
-                                child: callOptions(
-                                    color: Colors.red, title: 'FOLD'),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    startFromUser(
+                                        bet: BetState.fold, price: 0, bid: 0);
+                                    startFromThirdPlayer();
+                                    startFromFourthPlayer();
+                                  },
+                                  child: callOptions(
+                                      color: Colors.red, title: 'FOLD'),
+                                ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(8.0),
                                 child: GestureDetector(
                                     onTap: () {
-                                      setUserCall(
-                                          name: 'user',
-                                          isCalled: true,
-                                          isRaised: false,
-                                          price: highestCall);
-                                      context
-                                          .read<ShowUserCallOptionsCubit>()
-                                          .toggleState(false);
-                                      Future.delayed(Duration(seconds: 1)).then(
-                                        (value) => setUserCall(
-                                            name: 'thirdPlayer',
-                                            isCalled: true,
-                                            isRaised: false,
-                                            price: highestCall),
-                                      );
-                                      Future.delayed(Duration(seconds: 2)).then(
-                                          (value) => setUserCall(
-                                              name: 'fourthPlayer',
-                                              isCalled: true,
-                                              isRaised: false,
-                                              price: highestCall));
+                                      startFromUser(
+                                          bet: BetState.call,
+                                          price: highestCall,
+                                          bid: highestCall);
+                                      startFromThirdPlayer();
+                                      startFromFourthPlayer();
                                     },
                                     child: callOptions(
                                         color: Colors.blue, title: 'CALL')),
@@ -463,27 +668,53 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                     child: callOptions(
                                         color: Colors.green, title: 'RAISE')),
                               ),
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: GestureDetector(
+                                    onTap: () {
+                                      startFromUser(
+                                          bet: BetState.recheck,
+                                          price: 0,
+                                          bid: 0);
+                                      startFromThirdPlayer();
+                                      startFromFourthPlayer();
+                                    },
+                                    child: callOptions(
+                                        color: Colors.green, title: 'RECHECK')),
+                              )
                             ]),
                       ),
-                    if (hasUserCalledWithCall('user') ||
-                        hasUserCalledWithRaise('user'))
-                      callLabel(
-                          top: 0.02,
-                          left: 0.43,
-                          color: callLabelColor,
-                          title: getUserCallPrice('user')),
-                    if (hasUserCalledWithCall('user'))
-                      callTag(
-                          top: 0.06,
-                          left: 0.36,
-                          color: Colors.red,
-                          title: 'CALL'),
-                    if (hasUserCalledWithRaise('user'))
-                      callTag(
-                          top: 0.06,
-                          left: 0.36,
-                          color: Colors.red,
-                          title: 'RAISE'),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(
+                            right: widthWithScreenRatio(context, 0.22),
+                          ),
+                          child: Column(children: [
+                            if (hasUserCalled('user') &&
+                                userBetState('user') == BetState.call)
+                              callTag(color: Colors.red, title: 'CALL'),
+                            if (hasUserCalled('user') &&
+                                userBetState('user') == BetState.raise)
+                              callTag(color: Colors.red, title: 'RAISE'),
+                            if (hasUserCalled('user') &&
+                                userBetState('user') == BetState.fold)
+                              callTag(color: Colors.red, title: 'FOLD'),
+                            if (hasUserCalled('user') &&
+                                userBetState('user') == BetState.recheck)
+                              callTag(color: Colors.red, title: 'RECHECK'),
+                            Spacing().verticalSpaceWithRatio(context, 0.02),
+                            if (hasUserCalled('user') &&
+                                userBetState('user') != BetState.fold &&
+                                userBetState('user') != BetState.recheck)
+                              callLabel(
+                                  color: callLabelColor,
+                                  title: getUserCallPrice('user')),
+                          ]),
+                        ),
+                      ],
+                    ),
                     if (showRaisedPrices)
                       Container(
                         width: widthWithScreenRatio(context, 1),
@@ -497,40 +728,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                         child: GestureDetector(
                                           onTap: () {
                                             setState(() {
-                                              highestCall =
-                                                  highestCall + index + 1;
-                                              secondPlayerCall = highestCall;
+                                              if (highestCall != 0) {
+                                                highestCall =
+                                                    highestCall + index + 1;
+                                              } else {
+                                                highestCall = 2344 + index + 1;
+                                              }
                                             });
                                             print(highestCall);
 
-                                            setUserCall(
-                                                name: 'user',
-                                                isCalled: false,
-                                                isRaised: true,
-                                                price: secondPlayerCall);
+                                            startFromUser(
+                                                bet: BetState.raise,
+                                                price: highestCall,
+                                                bid: highestCall);
                                             context
                                                 .read<ShowRaisedPricesCubit>()
                                                 .toggleState(false);
-
-                                            Future.delayed(Duration(seconds: 1))
-                                                .then(
-                                              (value) => setUserCall(
-                                                  name: 'thirdPlayer',
-                                                  isCalled: true,
-                                                  isRaised: false,
-                                                  price: secondPlayerCall),
-                                            );
-                                            Future.delayed(Duration(seconds: 2))
-                                                .then((value) => setUserCall(
-                                                    name: 'fourthPlayer',
-                                                    isCalled: true,
-                                                    isRaised: false,
-                                                    price: secondPlayerCall));
+                                            startFromThirdPlayer();
+                                            startFromFourthPlayer();
                                           },
                                           child: callOptions(
                                               color: Colors.green,
-                                              title:
-                                                  '${firstPlayerCall + index + 1}'),
+                                              title: highestCall != 0
+                                                  ? '${highestCall + index + 1}'
+                                                  : '${2344 + index + 1}'),
                                         ),
                                       ))
                             ]),
@@ -545,25 +766,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     );
   }
 
-  Widget callTag(
-          {required double top,
-          required double left,
-          required Color color,
-          required String title}) =>
-      Positioned(
-          top: heightWithScreenRatio(context, top),
-          left: widthWithScreenRatio(context, left),
-          child: Container(
-            decoration: BoxDecoration(
-                color: color, borderRadius: BorderRadius.circular(10)),
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Text(
-                title,
-                style: TextStyle(color: Colors.white, fontSize: 11),
-              ),
-            ),
-          ));
+  Widget callTag({required Color color, required String title}) => Container(
+        decoration: BoxDecoration(
+            color: color, borderRadius: BorderRadius.circular(10)),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: Text(
+            title,
+            style: TextStyle(color: Colors.white, fontSize: 11),
+          ),
+        ),
+      );
 
   Widget callOptions({required Color color, required String title}) =>
       Container(
@@ -577,31 +790,23 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             ),
           ));
 
-  Widget callLabel(
-          {required double top,
-          required double left,
-          required Color color,
-          required String title}) =>
-      Positioned(
-          top: heightWithScreenRatio(context, top),
-          left: widthWithScreenRatio(context, left),
-          child: Container(
-              decoration: BoxDecoration(
-                  color: color,
-                  border: Border.all(color: color),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Padding(
-                padding: EdgeInsets.symmetric(
-                    vertical: heightWithScreenRatio(
-                      context,
-                      0.01,
-                    ),
-                    horizontal: widthWithScreenRatio(context, 0.01)),
-                child: Text(
-                  title,
-                  style: TextStyle(color: Colors.white),
-                ),
-              )));
+  Widget callLabel({required Color color, required String title}) => Container(
+      decoration: BoxDecoration(
+          color: color,
+          border: Border.all(color: color),
+          borderRadius: BorderRadius.circular(10)),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+            vertical: heightWithScreenRatio(
+              context,
+              0.01,
+            ),
+            horizontal: widthWithScreenRatio(context, 0.01)),
+        child: Text(
+          title,
+          style: TextStyle(color: Colors.white),
+        ),
+      ));
 
   Widget horizontalBotWithCard({
     double? leftForFirstCard,
@@ -838,15 +1043,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         ),
       );
 
-  Widget bottomCardWidgetTemp(BuildContext context, String image) => Container(
-        width: widthWithScreenRatio(context, 0.0769),
-        height: widthWithScreenRatio(context, 0.11),
-        child: Image.asset(
-          image,
-          fit: BoxFit.cover,
-        ),
-      );
-
   Widget bottomCardWidget(BuildContext context, PlayingCard card) => Container(
         width: widthWithScreenRatio(context, 0.0766),
         height: widthWithScreenRatio(context, 0.12),
@@ -968,21 +1164,29 @@ class WinGameCubit extends Cubit<bool> {
   void toggleState(bool status) => emit(status);
 }
 
+enum BetState { fold, call, raise, recheck }
+
 class UserCall {
   String user;
-  bool isCall;
-  bool isRaised;
+  BetState bet;
   int price;
+  List<int> cardIndex;
   UserCall(
       {required this.user,
-      required this.isCall,
-      required this.isRaised,
-      required this.price});
+      required this.bet,
+      required this.price,
+      required this.cardIndex});
 }
 
-class ShowUserCallCubit extends Cubit<List<UserCall>> {
-  ShowUserCallCubit() : super([]);
+class SetUserBetCubit extends Cubit<BetState> {
+  SetUserBetCubit() : super(BetState.call);
+  void toggleState(BetState betState) => emit(betState);
+}
+
+class UserCallListCubit extends Cubit<List<UserCall>> {
+  UserCallListCubit() : super([]);
   void setUserCall(UserCall userCall) => emit([...state, userCall]);
+  void resetState() => emit([]);
 }
 
 class ShowUserCallOptionsCubit extends Cubit<bool> {
@@ -993,4 +1197,35 @@ class ShowUserCallOptionsCubit extends Cubit<bool> {
 class ShowRaisedPricesCubit extends Cubit<bool> {
   ShowRaisedPricesCubit() : super(false);
   void toggleState(bool status) => emit(status);
+}
+
+class FirstPlayerRecheckStatusCubit extends Cubit<bool> {
+  FirstPlayerRecheckStatusCubit() : super(false);
+  void toggleState() => emit(true);
+  void resetState() => emit(false);
+}
+
+class TotalBidPriceCubit extends Cubit<int> {
+  TotalBidPriceCubit() : super(0);
+  void addBid(int price) {
+    print(price);
+    emit(state + price);
+    print(state);
+  }
+}
+
+class IsGeneratedRandomCardCubit extends Cubit<bool> {
+  IsGeneratedRandomCardCubit() : super(false);
+  void toggleState() => emit(true);
+}
+
+class RandomCardsGeneratorCubit extends Cubit<List<int>> {
+  RandomCardsGeneratorCubit() : super([]);
+  void generateRandomCards(List<int> cardsList) => emit([...cardsList]);
+}
+
+class TurnRoundCubit extends Cubit<int> {
+  TurnRoundCubit() : super(0);
+  void movieRound() => emit(state + 1);
+  void resetRound() => emit(0);
 }
