@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:poker_clone/poker_clone/bloc/cards_distribution_cubit.dart';
+import 'package:poker_clone/poker_clone/bloc/winner_cubit.dart';
 import 'package:poker_clone/poker_clone/home_page.dart';
 
 void main() {
@@ -28,9 +30,10 @@ class MyApp extends StatelessWidget {
           BlocProvider(create: (context) => SetUserBetCubit()),
           BlocProvider(create: (context) => FirstPlayerRecheckStatusCubit()),
           BlocProvider(create: (context) => TotalBidPriceCubit()),
-          BlocProvider(create: (context) => RandomCardsGeneratorCubit()),
-          BlocProvider(create: (context) => IsGeneratedRandomCardCubit()),
           BlocProvider(create: (context) => TurnRoundCubit()),
+          BlocProvider(create: (context) => CardsDistributionCubit()),
+          BlocProvider(create: (context) => RoundCountCubit()),
+          BlocProvider(create: (context) => WinnerCubit()),
         ],
         child: MaterialApp(
           title: 'Flutter Demo',

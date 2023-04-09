@@ -6,6 +6,8 @@ import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playing_cards/playing_cards.dart';
 import 'package:poker_clone/core/utils.dart';
+import 'package:poker_clone/poker_clone/bloc/cards_distribution_cubit.dart';
+import 'package:poker_clone/poker_clone/bloc/winner_cubit.dart';
 import 'package:poker_clone/poker_clone/components/player_identity.dart';
 import 'package:poker_clone/poker_clone/components/score_counter.dart';
 import 'package:poker_clone/poker_clone/components/settings_widget.dart';
@@ -27,6 +29,14 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
+  bool showThreeCards = false;
+  bool showFourthCard = false;
+  bool showFifthCard = false;
+  bool hasCountedForFirstRound = false;
+  bool isSelectedRandomCard = false;
+  bool showTwoPlayerCards = false;
+  List<PlayingCardView> cardsList = [];
+  int round = 1;
   final callLabelColor = Color.fromARGB(255, 117, 135, 150);
   late PlayingCard firstCard, secondCard, thirdCard, fourthCard, fifthCard;
   late int highestCall,
@@ -119,16 +129,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final totalBid = context.watch<TotalBidPriceCubit>().state;
     final hasFirstPlayerRecheck =
         context.watch<FirstPlayerRecheckStatusCubit>().state;
-    final isGeneratedRandomCard =
-        context.watch<IsGeneratedRandomCardCubit>().state;
-    if (!isGeneratedRandomCard) {
-      List<int> cardsList = [];
+    final roundCounts = context.watch<RoundCountCubit>().state;
+    if (!isSelectedRandomCard) {
       for (var i = 0; i < 13; i++) {
-        final randomCard = random.nextInt(13);
-        cardsList.add(randomCard);
+        cardsList.add(context.read<CardsDistributionCubit>().selectCard());
+        print(cardsList[i].card.value);
       }
-      context.read<RandomCardsGeneratorCubit>().generateRandomCards(cardsList);
-      context.read<IsGeneratedRandomCardCubit>().toggleState();
+
+      setState(() {
+        isSelectedRandomCard = true;
+      });
     }
     void setUserCall(
             {required String name,
@@ -165,13 +175,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       context.read<StartGameCubit>().toggleState(true);
       context.read<WinGameCubit>().toggleState(false);
 
-      print(betState);
       setUserCall(
           name: 'firstPlayer',
           bet: betState,
           cardIndex: [0, 1],
           price: firstPlayerCall);
-      context.read<TurnRoundCubit>().movieRound();
+
       if (betState == BetState.recheck)
         context.read<FirstPlayerRecheckStatusCubit>().toggleState();
       Future.delayed(Duration(seconds: 2)).then((value) =>
@@ -188,15 +197,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             cardIndex: [0, 1],
             price: (() {
               if (betState == BetState.call) {
-                context.read<TurnRoundCubit>().movieRound();
                 context.read<TotalBidPriceCubit>().addBid(highestCall);
                 return highestCall;
               } else if (betState == BetState.fold) {
-                context.read<TurnRoundCubit>().movieRound();
                 context.read<TotalBidPriceCubit>().addBid(0);
                 return 0;
               } else if (betState == BetState.raise) {
-                context.read<TurnRoundCubit>().movieRound();
                 setState(() {
                   thirdPlayerCall =
                       highestCall + random.nextInt(3000 - highestCall);
@@ -205,7 +211,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                 context.read<TotalBidPriceCubit>().addBid(thirdPlayerCall);
                 return thirdPlayerCall;
               } else {
-                context.read<TurnRoundCubit>().movieRound();
                 context.read<TotalBidPriceCubit>().addBid(0);
                 return 0;
               }
@@ -224,43 +229,99 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             if (betState == BetState.call) {
               context.read<TurnRoundCubit>().movieRound();
               context.read<TotalBidPriceCubit>().addBid(highestCall);
+              context.read<RoundCountCubit>().addRound();
               return highestCall;
             } else if (betState == BetState.fold) {
               context.read<TurnRoundCubit>().movieRound();
               context.read<TotalBidPriceCubit>().addBid(0);
+              context.read<RoundCountCubit>().addRound();
               return 0;
             } else if (betState == BetState.raise) {
-              context.read<TurnRoundCubit>().movieRound();
               setState(() {
                 fourthPlayerCall =
                     highestCall + random.nextInt(3000 - highestCall);
               });
-
+              context.read<TurnRoundCubit>().movieRound();
               context.read<TotalBidPriceCubit>().addBid(fourthPlayerCall);
+              context.read<RoundCountCubit>().addRound();
               return fourthPlayerCall;
             } else {
               context.read<TurnRoundCubit>().movieRound();
               context.read<TotalBidPriceCubit>().addBid(0);
+              context.read<RoundCountCubit>().addRound();
               return 0;
             }
           }())));
+      setState(() {
+        round++;
+      });
     }
 
     void startFromUser(
         {required BetState bet, required int price, required int bid}) {
       setUserCall(name: 'user', bet: bet, cardIndex: [0, 1], price: price);
-      context.read<TurnRoundCubit>().movieRound();
+
       context.read<TotalBidPriceCubit>().addBid(bid);
       context.read<ShowUserCallOptionsCubit>().toggleState(false);
     }
 
     final turnRoundState = context.watch<TurnRoundCubit>().state;
 
-    print(turnRoundState);
-
     context
         .read<SetUserBetCubit>()
         .toggleState(BetState.values[random.nextInt(4)]);
+
+    if (turnRoundState == Rounds.nextLevel) {
+      context.read<UserCallListCubit>().resetState();
+    }
+    if (turnRoundState == Rounds.showThreeCards) {
+      switch (round) {
+        case 2:
+          setState(() {
+            showThreeCards = true;
+          });
+          break;
+        case 3:
+          setState(() {
+            showFourthCard = true;
+          });
+          break;
+        case 4:
+          setState(() {
+            showFifthCard = true;
+          });
+          break;
+
+        default:
+      }
+    }
+
+    if (turnRoundState == Rounds.firstPlayer &&
+        !hasCountedForFirstRound &&
+        roundCounts != 4) {
+      print(hasCountedForFirstRound);
+      setState(() {
+        hasCountedForFirstRound = true;
+      });
+      startFromFirstPlayer();
+      print(hasCountedForFirstRound);
+    }
+    if (turnRoundState == Rounds.none) {
+      setState(() {
+        hasCountedForFirstRound = false;
+      });
+    }
+    print(roundCounts);
+    if (roundCounts == 4) {
+      context.read<WinGameCubit>().toggleState(true);
+    }
+    if (isWinGame) {
+      setState(() {
+        showTwoPlayerCards = true;
+      });
+      context.read<WinnerCubit>().selectWinner(cardsList);
+    }
+
     String getUserCallPrice(String title) => userCallList[
             userCallList.indexWhere((element) => element.user == title)]
         .price
@@ -301,14 +362,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               title: 'bot2',
                               bits: 2),
                           verticalBotWithCard(
-                              leftForFirstCard: 0.112,
-                              topForFirstCard: 0.028,
-                              angleForFirstCard: -40,
-                              leftForSecondCard: 0.106,
-                              topForSecondCard: 0.035,
-                              angleForSecondCard: -24,
+                              leftForFirstCard:
+                                  !showTwoPlayerCards ? 0.115 : 0.09,
+                              topForFirstCard:
+                                  !showTwoPlayerCards ? 0.03 : 0.035,
+                              angleForFirstCard: -20,
+                              leftForSecondCard:
+                                  !showTwoPlayerCards ? 0.08 : 0.045,
+                              topForSecondCard:
+                                  !showTwoPlayerCards ? 0.03 : 0.028,
+                              angleForSecondCard: -160,
                               leftForBot: 0.089,
-                              topForBot: 0),
+                              topForBot: 0,
+                              showTwoPlayerCards: showTwoPlayerCards),
                           Column(children: [
                             Spacing().verticalSpaceWithRatio(context, 0.08),
                             if (hasUserCalled('fourthPlayer') &&
@@ -346,14 +412,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         context: context, width: 0.09, title: 'bot1', bits: 0),
                     Spacing().verticalSpaceWithRatio(context, 0.01),
                     horizontalBotWithCard(
-                        leftForFirstCard: 0.034,
-                        topForFirstCard: 0.005,
-                        leftForSecondCard: 0.042,
-                        topForSecondCard: 0.01,
-                        angleForFirstCard: 30,
-                        angleForSecondCard: 50,
+                        leftForFirstCard: !showTwoPlayerCards ? 0.034 : 0.03,
+                        topForFirstCard: !showTwoPlayerCards ? 0.005 : 0.002,
+                        leftForSecondCard: !showTwoPlayerCards ? 0.042 : 0.034,
+                        topForSecondCard: !showTwoPlayerCards ? 0.01 : 0.045,
+                        angleForFirstCard: 60,
+                        angleForSecondCard: 100,
                         leftForBot: 0,
-                        topForBot: 0.085),
+                        topForBot: 0.085,
+                        showTwoPlayerCards: showTwoPlayerCards),
                     Spacing().verticalSpaceWithRatio(context, 0.01),
                     PlayerIdentity(
                         context: context, width: 0.08, title: '', bits: 3)
@@ -364,7 +431,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   height: heightWithScreenRatio(context, 0.53),
                   alignment: Alignment.center,
                   child: (() {
-                    if (!showStartGameDialog || isWinGame) {
+                    if (!showStartGameDialog) {
                       return Container(
                         width: widthWithScreenRatio(context, 0.45),
                         height: heightWithScreenRatio(context, 0.3),
@@ -377,9 +444,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                isWinGame
-                                    ? 'Continue the game?'
-                                    : 'Start the game?',
+                                'Start the game?',
                                 style: TextStyle(
                                     color: Color.fromARGB(255, 39, 12, 2),
                                     fontSize: 20,
@@ -484,33 +549,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       .verticalSpaceWithRatio(context, 0.04),
                                   Row(
                                     children: [
-                                      if (turnRoundState > 3)
-                                        Container(
-                                          width: widthWithScreenRatio(
-                                              context, 0.06),
-                                          alignment: Alignment.center,
-                                          child: PlayingCardView(
-                                              card: PlayingCard(
-                                                  Suit.clubs, CardValue.ace)),
-                                        ),
-                                      if (turnRoundState > 3)
-                                        Container(
-                                          width: widthWithScreenRatio(
-                                              context, 0.06),
-                                          alignment: Alignment.center,
-                                          child: PlayingCardView(
-                                              card: PlayingCard(
-                                                  Suit.spades, CardValue.five)),
-                                        ),
-                                      if (turnRoundState > 3)
-                                        Container(
-                                          width: widthWithScreenRatio(
-                                              context, 0.06),
-                                          alignment: Alignment.center,
-                                          child: PlayingCardView(
-                                              card: PlayingCard(Suit.diamonds,
-                                                  CardValue.queen)),
-                                        ),
+                                      if (showThreeCards)
+                                        visibleCardAfterEachRound(
+                                            card: cardsList[0].card),
+                                      if (showThreeCards)
+                                        visibleCardAfterEachRound(
+                                            card: cardsList[1].card),
+                                      if (showThreeCards)
+                                        visibleCardAfterEachRound(
+                                            card: cardsList[2].card),
+                                      if (showFourthCard)
+                                        visibleCardAfterEachRound(
+                                            card: cardsList[3].card),
+                                      if (showFifthCard)
+                                        visibleCardAfterEachRound(
+                                            card: cardsList[4].card),
                                     ],
                                   ),
                                 ]),
@@ -575,14 +628,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           bits: 0),
                       Spacing().verticalSpaceWithRatio(context, 0.01),
                       horizontalBotWithCard(
-                          rightForFirstCard: 0.034,
-                          topForFirstCard: 0.005,
-                          rightForSecondCard: 0.042,
-                          topForSecondCard: 0.01,
-                          angleForFirstCard: 30,
-                          angleForSecondCard: 50,
+                          rightForFirstCard:
+                              !showTwoPlayerCards ? 0.036 : 0.028,
+                          topForFirstCard: 0.001,
+                          rightForSecondCard:
+                              !showTwoPlayerCards ? 0.044 : 0.032,
+                          topForSecondCard: 0.05,
+                          angleForFirstCard: -80,
+                          angleForSecondCard: -100,
                           rightForBot: 0,
-                          topForBot: 0.085),
+                          topForBot: 0.085,
+                          showTwoPlayerCards: showTwoPlayerCards),
                       Spacing().verticalSpaceWithRatio(context, 0.01),
                       PlayerIdentity(
                           context: context, width: 0.08, title: '', bits: 1)
@@ -609,17 +665,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                     Positioned(
-                      left: widthWithScreenRatio(context, 0.41),
+                      left: widthWithScreenRatio(context, 0.42),
                       bottom: heightWithScreenRatio(context, 0.01),
                       child: verticalBotWithCard(
-                          leftForFirstCard: 0.072,
+                          leftForFirstCard: 0.05,
                           bottomForFirstCard: 0.006,
                           angleForFirstCard: -10,
-                          leftForSecondCard: 0.084,
+                          leftForSecondCard: 0.098,
                           bottomForSecondCard: 0.006,
                           angleForSecondCard: 20,
                           leftForBot: 0.09,
-                          bottomForBot: 0),
+                          bottomForBot: 0,
+                          showTwoPlayerCards: showTwoPlayerCards),
                     ),
                     if (showUserCallOptions)
                       Container(
@@ -735,7 +792,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                                 highestCall = 2344 + index + 1;
                                               }
                                             });
-                                            print(highestCall);
 
                                             startFromUser(
                                                 bet: BetState.raise,
@@ -765,6 +821,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       ),
     );
   }
+
+  Widget visibleCardAfterEachRound({required PlayingCard card}) => Container(
+        width: widthWithScreenRatio(context, 0.06),
+        alignment: Alignment.center,
+        child: PlayingCardView(card: card),
+      );
 
   Widget callTag({required Color color, required String title}) => Container(
         decoration: BoxDecoration(
@@ -820,33 +882,52 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double? rightForFirstCard,
     double? rightForSecondCard,
     double? rightForBot,
+    required bool showTwoPlayerCards,
   }) =>
       rightForFirstCard != null
           ? Container(
               width: widthWithScreenRatio(context, 0.12),
-              height: heightWithScreenRatio(context, 0.24),
+              height: heightWithScreenRatio(context, 0.28),
               child: Stack(
                 children: [
                   Positioned(
-                    right: widthWithScreenRatio(context, 0.034),
-                    top: widthWithScreenRatio(context, 0.005),
+                    right: widthWithScreenRatio(context, rightForFirstCard),
+                    top: widthWithScreenRatio(context, topForFirstCard!),
                     child: Transform.rotate(
-                      angle: -30 / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      angle: angleForFirstCard! / 180 * pi,
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[11].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
-                    right: widthWithScreenRatio(context, 0.042),
-                    top: widthWithScreenRatio(context, 0.01),
+                    right: widthWithScreenRatio(context, rightForSecondCard!),
+                    top: widthWithScreenRatio(context, topForSecondCard!),
                     child: Transform.rotate(
-                      angle: -50 / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      angle: angleForSecondCard! / 180 * pi,
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[12].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -870,7 +951,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             )
           : Container(
               width: widthWithScreenRatio(context, 0.12),
-              height: heightWithScreenRatio(context, 0.24),
+              height: heightWithScreenRatio(context, 0.28),
               child: Stack(
                 children: [
                   Positioned(
@@ -878,10 +959,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     top: widthWithScreenRatio(context, topForFirstCard!),
                     child: Transform.rotate(
                       angle: angleForFirstCard! / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[9].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -889,10 +979,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     top: widthWithScreenRatio(context, topForSecondCard!),
                     child: Transform.rotate(
                       angle: angleForSecondCard! / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[10].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -927,10 +1026,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     double? bottomForFirstCard,
     double? bottomForSecondCard,
     double? bottomForBot,
+    required bool showTwoPlayerCards,
   }) =>
       bottomForFirstCard != null
           ? Container(
-              width: widthWithScreenRatio(context, 0.16),
+              width: widthWithScreenRatio(context, 0.17),
               height: heightWithScreenRatio(context, 0.235),
               child: Stack(
                 children: [
@@ -944,7 +1044,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: widthWithScreenRatio(context, 0.08),
                         alignment: Alignment.center,
                         child: PlayingCardView(
-                          card: PlayingCard(Suit.clubs, CardValue.ace),
+                          card: cardsList[7].card,
                         ),
                       ),
                     ),
@@ -959,7 +1059,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: widthWithScreenRatio(context, 0.08),
                         alignment: Alignment.center,
                         child: PlayingCardView(
-                          card: PlayingCard(Suit.clubs, CardValue.queen),
+                          card: cardsList[8].card,
                         ),
                       ),
                     ),
@@ -980,7 +1080,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
               ),
             )
           : Container(
-              width: widthWithScreenRatio(context, 0.16),
+              width: widthWithScreenRatio(context, 0.17),
               height: heightWithScreenRatio(context, 0.235),
               child: Stack(
                 children: [
@@ -989,10 +1089,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     top: widthWithScreenRatio(context, topForFirstCard!),
                     child: Transform.rotate(
                       angle: angleForFirstCard! / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[6].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -1000,10 +1109,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     top: widthWithScreenRatio(context, topForSecondCard!),
                     child: Transform.rotate(
                       angle: angleForSecondCard! / 180 * pi,
-                      child: Image.asset(
-                        'assets/images/card.png',
-                        width: widthWithScreenRatio(context, 0.04),
-                      ),
+                      child: !showTwoPlayerCards
+                          ? Image.asset(
+                              'assets/images/card.png',
+                              width: widthWithScreenRatio(context, 0.04),
+                            )
+                          : Container(
+                              width: widthWithScreenRatio(context, 0.08),
+                              height: widthWithScreenRatio(context, 0.08),
+                              alignment: Alignment.center,
+                              child: PlayingCardView(
+                                card: cardsList[6].card,
+                              ),
+                            ),
                     ),
                   ),
                   Positioned(
@@ -1096,58 +1214,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
 }
 
-final cardListForSelection = [
-  PlayingCardView(
-    card: PlayingCard(Suit.clubs, CardValue.ace),
-  ),
-  PlayingCardView(
-    card: PlayingCard(Suit.spades, CardValue.queen),
-  ),
-  PlayingCardView(
-      card: PlayingCard(
-    Suit.spades,
-    CardValue.ten,
-  )),
-  PlayingCardView(
-    card: PlayingCard(Suit.spades, CardValue.seven),
-  ),
-  PlayingCardView(
-    card: PlayingCard(Suit.spades, CardValue.two),
-  ),
-  PlayingCardView(
-      card: PlayingCard(
-    Suit.hearts,
-    CardValue.ace,
-  )),
-  PlayingCardView(
-    card: PlayingCard(Suit.hearts, CardValue.queen),
-  ),
-  PlayingCardView(
-    card: PlayingCard(Suit.hearts, CardValue.ten),
-  ),
-  PlayingCardView(
-      card: PlayingCard(
-    Suit.hearts,
-    CardValue.four,
-  )),
-  PlayingCardView(
-    card: PlayingCard(Suit.clubs, CardValue.eight),
-  ),
-  PlayingCardView(
-    card: PlayingCard(Suit.clubs, CardValue.seven),
-  ),
-  PlayingCardView(
-      card: PlayingCard(
-    Suit.clubs,
-    CardValue.six,
-  )),
-  PlayingCardView(
-      card: PlayingCard(
-    Suit.diamonds,
-    CardValue.seven,
-  )),
-];
-
 class CardVisibilityCubit extends Cubit<List<bool>> {
   CardVisibilityCubit() : super([false, false, false, false]);
   void toggleVisibility(List<bool> status) => emit(status);
@@ -1161,7 +1227,11 @@ class StartGameCubit extends Cubit<bool> {
 
 class WinGameCubit extends Cubit<bool> {
   WinGameCubit() : super(false);
-  void toggleState(bool status) => emit(status);
+  void toggleState(bool status) {
+    Future.delayed(Duration(seconds: 1), () {
+      emit(status);
+    });
+  }
 }
 
 enum BetState { fold, call, raise, recheck }
@@ -1208,24 +1278,28 @@ class FirstPlayerRecheckStatusCubit extends Cubit<bool> {
 class TotalBidPriceCubit extends Cubit<int> {
   TotalBidPriceCubit() : super(0);
   void addBid(int price) {
-    print(price);
     emit(state + price);
-    print(state);
   }
 }
 
-class IsGeneratedRandomCardCubit extends Cubit<bool> {
-  IsGeneratedRandomCardCubit() : super(false);
-  void toggleState() => emit(true);
+enum Rounds { nextLevel, showThreeCards, firstPlayer, none }
+
+class TurnRoundCubit extends Cubit<Rounds> {
+  TurnRoundCubit() : super(Rounds.none);
+  void movieRound() {
+    Future.delayed(Duration(seconds: 1), () => emit(Rounds.nextLevel))
+        .then((value) => Future.delayed(
+            Duration(seconds: 1), () => emit(Rounds.showThreeCards)))
+        .then((value) => Future.delayed(
+            Duration(seconds: 1), () => emit(Rounds.firstPlayer)))
+        .then((value) =>
+            Future.delayed(Duration(seconds: 1), () => emit(Rounds.none)));
+
+    emit(Rounds.none);
+  }
 }
 
-class RandomCardsGeneratorCubit extends Cubit<List<int>> {
-  RandomCardsGeneratorCubit() : super([]);
-  void generateRandomCards(List<int> cardsList) => emit([...cardsList]);
-}
-
-class TurnRoundCubit extends Cubit<int> {
-  TurnRoundCubit() : super(0);
-  void movieRound() => emit(state + 1);
-  void resetRound() => emit(0);
+class RoundCountCubit extends Cubit<int> {
+  RoundCountCubit() : super(0);
+  void addRound() => emit(state + 1);
 }
