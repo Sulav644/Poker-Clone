@@ -4,50 +4,116 @@ import 'package:poker_clone/poker_clone/bloc/components/card_values.dart';
 
 enum Winner { firstPlayer, secondPlayer, thirdPlayer, fourthPlayer, none }
 
+class CardAndCount {
+  CardValue cardValue;
+  int count;
+  CardAndCount({required this.cardValue, required this.count});
+}
+
 class WinnerCubit extends Cubit<List<PlayingCardView>> {
   WinnerCubit() : super([]);
   void selectWinner(List<PlayingCardView> totalCardsList) {
     List<PlayingCardView> fiveMainCards = [];
-    List<PlayingCardView> firstPlayerCards = [];
-    List<PlayingCardView> secondPlayerCards = [];
-    List<PlayingCardView> thirdPlayerCards = [];
+    List<PlayingCardView> firstPlayerCards = [
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.king)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.queen)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.jack)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ten)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
+    ];
+    List<PlayingCardView> secondPlayerCards = [
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.six)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.seven)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.eight)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.nine)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ten)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
+    ];
+    List<PlayingCardView> thirdPlayerCards = [
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
+    ];
     List<PlayingCardView> fourthPlayerCards = [];
 
     for (var i = 0; i < 5; i++) {
       fiveMainCards.add(totalCardsList[i]);
     }
 
-    firstPlayerCards = addCardsInList(firstPlayerCards, totalCardsList, 5, 6);
-    secondPlayerCards = addCardsInList(secondPlayerCards, totalCardsList, 7, 8);
-    thirdPlayerCards = addCardsInList(thirdPlayerCards, totalCardsList, 9, 10);
     fourthPlayerCards =
         addCardsInList(fourthPlayerCards, totalCardsList, 11, 12);
-    List<int> list = checkRepeated(firstPlayerCards);
-    List<int> listTwo = checkRepeated(secondPlayerCards);
-    List<int> listThree = checkRepeated(thirdPlayerCards);
-    List<int> listFour = checkRepeated(fourthPlayerCards);
-    print('firstPlayer $list');
-    print('secondPlayer $listTwo');
-    print('thirdPlayer $listThree');
-    print('fourthPlayer $listFour');
-    int count = suitCount(firstPlayerCards, Suit.clubs);
-    int countTwo = suitCount(firstPlayerCards, Suit.diamonds);
-    int countThree = suitCount(firstPlayerCards, Suit.hearts);
-    int countFour = suitCount(firstPlayerCards, Suit.spades);
-    bool hasCard = cardTypeCount(firstPlayerCards, CardValue.ace);
-    bool hasCardTwo = cardTypeCount(firstPlayerCards, CardValue.king);
-    bool hasCardThree = cardTypeCount(firstPlayerCards, CardValue.queen);
-    bool hasCardFour = cardTypeCount(firstPlayerCards, CardValue.jack);
-    bool hasCardFive = cardTypeCount(firstPlayerCards, CardValue.ten);
-    int sequenceOne = sequenceOrderCount(firstPlayerCards, cardValuesOne);
-    int sequenceTwo = sequenceOrderCount(firstPlayerCards, cardValuesTwo);
-    int sequenceThree = sequenceOrderCount(firstPlayerCards, cardValuesThree);
-    int sequenceFour = sequenceOrderCount(firstPlayerCards, cardValuesFour);
-    int sequenceFive = sequenceOrderCount(firstPlayerCards, cardValuesFive);
-    int sequenceSix = sequenceOrderCount(firstPlayerCards, cardValuesSix);
-    int sequenceSeven = sequenceOrderCount(firstPlayerCards, cardValuesSeven);
-    int sequenceEight = sequenceOrderCount(firstPlayerCards, cardValuesEight);
-    int sequenceNine = sequenceOrderCount(firstPlayerCards, cardValuesNine);
+
+    int count = suitCount(thirdPlayerCards, Suit.clubs);
+    int countTwo = suitCount(thirdPlayerCards, Suit.diamonds);
+    int countThree = suitCount(thirdPlayerCards, Suit.hearts);
+    int countFour = suitCount(thirdPlayerCards, Suit.spades);
+    if (count == 5 || countTwo == 5 || countThree == 5 || countFour == 5) {
+      bool hasCard = cardTypeCount(firstPlayerCards, CardValue.ace);
+      bool hasCardTwo = cardTypeCount(firstPlayerCards, CardValue.king);
+      bool hasCardThree = cardTypeCount(firstPlayerCards, CardValue.queen);
+      bool hasCardFour = cardTypeCount(firstPlayerCards, CardValue.jack);
+      bool hasCardFive = cardTypeCount(firstPlayerCards, CardValue.ten);
+      int sequenceOne = sequenceOrderCount(secondPlayerCards, cardValuesOne);
+      int sequenceTwo = sequenceOrderCount(secondPlayerCards, cardValuesTwo);
+      int sequenceThree =
+          sequenceOrderCount(secondPlayerCards, cardValuesThree);
+      int sequenceFour = sequenceOrderCount(secondPlayerCards, cardValuesFour);
+      int sequenceFive = sequenceOrderCount(secondPlayerCards, cardValuesFive);
+      int sequenceSix = sequenceOrderCount(secondPlayerCards, cardValuesSix);
+      int sequenceSeven =
+          sequenceOrderCount(secondPlayerCards, cardValuesSeven);
+      if (hasCard && hasCardTwo && hasCardThree && hasCardFour && hasCardFive) {
+        print('royal flush');
+      }
+      if (sequenceOne == 5 ||
+          sequenceTwo == 5 ||
+          sequenceThree == 5 ||
+          sequenceFour == 5 ||
+          sequenceFive == 5 ||
+          sequenceSix == 5 ||
+          sequenceSeven == 5) {
+        print('straight flush');
+      }
+      print('flush');
+    } else {
+      print('four kind');
+      List<CardAndCount> cardAndCount = [];
+
+      List<PlayingCardView> filteredList = [];
+      emit(thirdPlayerCards);
+
+      for (var element in state) {
+        int count = 0;
+        print('start');
+
+        for (var i = 0; i < state.length; i++) {
+          if (element.card.value == state[i].card.value) {
+            print('${element.card.suit} ${state[i].card.value}');
+            count++;
+            print('countpre $count');
+          }
+        }
+
+        for (var newElement in state) {
+          if (element.card.value != newElement.card.value) {
+            filteredList.add(newElement);
+          }
+        }
+
+        emit([...filteredList]);
+        if (count > 1) {
+          print('count $count');
+          print('match ${element.card.suit} ${element.card.value}');
+        }
+      }
+    }
   }
 
   List<PlayingCardView> addCardsInList(List<PlayingCardView> playercardsList,
@@ -86,42 +152,14 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
   int sequenceOrderCount(
       List<PlayingCardView> playerCards, List<CardValue> cardList) {
     int sequenceCount = 0;
-
-    for (var i = 0; i < 5; i++) {
-      if (playerCards[i].card.value == cardList[i]) {
-        sequenceCount++;
+    for (var element in cardList) {
+      for (var i = 0; i < playerCards.length; i++) {
+        if (playerCards[i].card.value == element) {
+          sequenceCount++;
+        }
       }
     }
+
     return sequenceCount;
-  }
-
-  List<int> checkRepeated(List<PlayingCardView> cardsList) {
-    print('check repeated');
-    List<int> repeatList = [];
-    int cardCount = 0;
-    emit([...cardsList]);
-    for (var element in state) {
-      cardCount = 0;
-      PlayingCardView card = element;
-      for (var i = 0; i < state.length; i++) {
-        if (card.card.value == state[i].card.value) {
-          cardCount++;
-        }
-      }
-
-      List<PlayingCardView> filteredList = [];
-      for (var newElement in state) {
-        if (newElement.card.value != element.card.value) {
-          filteredList.add(newElement);
-        }
-      }
-      print(cardCount);
-      print('${element.card.suit} ${element.card.value}');
-      emit([...filteredList]);
-      if (cardCount > 1) {
-        repeatList.add(cardCount);
-      }
-    }
-    return repeatList;
   }
 }

@@ -35,6 +35,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool hasCountedForFirstRound = false;
   bool isSelectedRandomCard = false;
   bool showTwoPlayerCards = false;
+  bool isFirstPlayerFold = false;
+  bool isUserFold = false;
+  bool isThirdPlayerFold = false;
+  bool isFourthPlayerFold = false;
   List<PlayingCardView> cardsList = [];
   int round = 1;
   final callLabelColor = Color.fromARGB(255, 117, 135, 150);
@@ -130,16 +134,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final hasFirstPlayerRecheck =
         context.watch<FirstPlayerRecheckStatusCubit>().state;
     final roundCounts = context.watch<RoundCountCubit>().state;
+
     if (!isSelectedRandomCard) {
       for (var i = 0; i < 13; i++) {
         cardsList.add(context.read<CardsDistributionCubit>().selectCard());
-        print(cardsList[i].card.value);
       }
-
+      context.read<WinnerCubit>().selectWinner(cardsList);
       setState(() {
         isSelectedRandomCard = true;
       });
     }
+
     void setUserCall(
             {required String name,
             required BetState bet,
@@ -147,76 +152,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             required List<int> cardIndex}) =>
         context.read<UserCallListCubit>().setUserCall(
             UserCall(user: name, bet: bet, cardIndex: cardIndex, price: price));
-
-    void startFromFirstPlayer() {
-      if (betState == BetState.call) {
-        setState(() {
-          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
-        });
-      } else if (betState == BetState.fold) {
-        setState(() {
-          firstPlayerCall = 0;
-        });
-      } else if (betState == BetState.raise) {
-        setState(() {
-          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
-        });
-      } else {
-        setState(() {
-          firstPlayerCall = 0;
-        });
-      }
-      if (firstPlayerCall != 0) {
-        highestCall = firstPlayerCall;
-      } else {
-        highestCall = 2344;
-      }
-      context.read<TotalBidPriceCubit>().addBid(firstPlayerCall);
-      context.read<StartGameCubit>().toggleState(true);
-      context.read<WinGameCubit>().toggleState(false);
-
-      setUserCall(
-          name: 'firstPlayer',
-          bet: betState,
-          cardIndex: [0, 1],
-          price: firstPlayerCall);
-
-      if (betState == BetState.recheck)
-        context.read<FirstPlayerRecheckStatusCubit>().toggleState();
-      Future.delayed(Duration(seconds: 2)).then((value) =>
-          context.read<ShowUserCallOptionsCubit>().toggleState(true));
-    }
-
-    void startFromThirdPlayer() {
-      context.read<SetUserBetCubit>().toggleState(
-          BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
-      Future.delayed(Duration(seconds: 1)).then(
-        (value) => setUserCall(
-            name: 'thirdPlayer',
-            bet: betState,
-            cardIndex: [0, 1],
-            price: (() {
-              if (betState == BetState.call) {
-                context.read<TotalBidPriceCubit>().addBid(highestCall);
-                return highestCall;
-              } else if (betState == BetState.fold) {
-                context.read<TotalBidPriceCubit>().addBid(0);
-                return 0;
-              } else if (betState == BetState.raise) {
-                setState(() {
-                  thirdPlayerCall =
-                      highestCall + random.nextInt(3000 - highestCall);
-                });
-
-                context.read<TotalBidPriceCubit>().addBid(thirdPlayerCall);
-                return thirdPlayerCall;
-              } else {
-                context.read<TotalBidPriceCubit>().addBid(0);
-                return 0;
-              }
-            }())),
-      );
-    }
 
     void startFromFourthPlayer() {
       context.read<SetUserBetCubit>().toggleState(
@@ -255,6 +190,85 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         round++;
       });
+    }
+
+    void startFromThirdPlayer() {
+      context.read<SetUserBetCubit>().toggleState(
+          BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
+      Future.delayed(Duration(seconds: 1)).then(
+        (value) => setUserCall(
+            name: 'thirdPlayer',
+            bet: betState,
+            cardIndex: [0, 1],
+            price: (() {
+              if (betState == BetState.call) {
+                context.read<TotalBidPriceCubit>().addBid(highestCall);
+                return highestCall;
+              } else if (betState == BetState.fold) {
+                setState(() {
+                  isThirdPlayerFold = true;
+                });
+                context.read<TotalBidPriceCubit>().addBid(0);
+                return 0;
+              } else if (betState == BetState.raise) {
+                setState(() {
+                  thirdPlayerCall =
+                      highestCall + random.nextInt(3000 - highestCall);
+                });
+
+                context.read<TotalBidPriceCubit>().addBid(thirdPlayerCall);
+                return thirdPlayerCall;
+              } else {
+                context.read<TotalBidPriceCubit>().addBid(0);
+                return 0;
+              }
+            }())),
+      );
+    }
+
+    void startFromFirstPlayer() {
+      if (betState == BetState.call) {
+        setState(() {
+          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
+        });
+      } else if (betState == BetState.fold) {
+        setState(() {
+          isFirstPlayerFold = true;
+          firstPlayerCall = 0;
+        });
+      } else if (betState == BetState.raise) {
+        setState(() {
+          firstPlayerCall = 2000 + random.nextInt(2500 - 2000);
+        });
+      } else {
+        setState(() {
+          firstPlayerCall = 0;
+        });
+      }
+      if (firstPlayerCall != 0) {
+        highestCall = firstPlayerCall;
+      } else {
+        highestCall = 2344;
+      }
+      context.read<TotalBidPriceCubit>().addBid(firstPlayerCall);
+      context.read<StartGameCubit>().toggleState(true);
+      context.read<WinGameCubit>().toggleState(false);
+
+      setUserCall(
+          name: 'firstPlayer',
+          bet: betState,
+          cardIndex: [0, 1],
+          price: firstPlayerCall);
+
+      if (betState == BetState.recheck)
+        context.read<FirstPlayerRecheckStatusCubit>().toggleState();
+      if (isUserFold) {
+        startFromThirdPlayer();
+        startFromFourthPlayer();
+      } else {
+        Future.delayed(Duration(seconds: 2)).then((value) =>
+            context.read<ShowUserCallOptionsCubit>().toggleState(true));
+      }
     }
 
     void startFromUser(
@@ -299,19 +313,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (turnRoundState == Rounds.firstPlayer &&
         !hasCountedForFirstRound &&
         roundCounts != 4) {
-      print(hasCountedForFirstRound);
       setState(() {
         hasCountedForFirstRound = true;
       });
-      startFromFirstPlayer();
-      print(hasCountedForFirstRound);
+      if (isFirstPlayerFold && isUserFold) {
+        startFromThirdPlayer();
+        startFromFourthPlayer();
+      } else if (isFirstPlayerFold) {
+        context.read<ShowUserCallOptionsCubit>().toggleState(true);
+      } else {
+        startFromFirstPlayer();
+      }
     }
     if (turnRoundState == Rounds.none) {
       setState(() {
         hasCountedForFirstRound = false;
       });
     }
-    print(roundCounts);
+
     if (roundCounts == 4) {
       context.read<WinGameCubit>().toggleState(true);
     }
@@ -363,16 +382,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               bits: 2),
                           verticalBotWithCard(
                               leftForFirstCard:
-                                  !showTwoPlayerCards ? 0.115 : 0.09,
+                                  !showTwoPlayerCards ? 0.115 : 0.1,
                               topForFirstCard:
-                                  !showTwoPlayerCards ? 0.03 : 0.035,
-                              angleForFirstCard: -20,
+                                  !showTwoPlayerCards ? 0.034 : 0.028,
+                              angleForFirstCard: -15,
                               leftForSecondCard:
-                                  !showTwoPlayerCards ? 0.08 : 0.045,
+                                  !showTwoPlayerCards ? 0.078 : 0.052,
                               topForSecondCard:
                                   !showTwoPlayerCards ? 0.03 : 0.028,
-                              angleForSecondCard: -160,
-                              leftForBot: 0.089,
+                              angleForSecondCard: -170,
+                              leftForBot: 0.09,
                               topForBot: 0,
                               showTwoPlayerCards: showTwoPlayerCards),
                           Column(children: [
@@ -385,7 +404,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               callTag(color: Colors.red, title: 'RAISE'),
                             if (hasUserCalled('fourthPlayer') &&
                                 userBetState('fourthPlayer') == BetState.fold)
-                              callTag(color: Colors.red, title: 'FOLD'),
+                              callTag(color: Colors.red, title: 'RECHECK'),
                             if (hasUserCalled('fourthPlayer') &&
                                 userBetState('fourthPlayer') ==
                                     BetState.recheck)
@@ -413,10 +432,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                     Spacing().verticalSpaceWithRatio(context, 0.01),
                     horizontalBotWithCard(
                         leftForFirstCard: !showTwoPlayerCards ? 0.034 : 0.03,
-                        topForFirstCard: !showTwoPlayerCards ? 0.005 : 0.002,
-                        leftForSecondCard: !showTwoPlayerCards ? 0.042 : 0.034,
-                        topForSecondCard: !showTwoPlayerCards ? 0.01 : 0.045,
-                        angleForFirstCard: 60,
+                        topForFirstCard: !showTwoPlayerCards ? 0.015 : 0.002,
+                        leftForSecondCard: !showTwoPlayerCards ? 0.04 : 0.03,
+                        topForSecondCard: !showTwoPlayerCards ? 0.05 : 0.045,
+                        angleForFirstCard: !showTwoPlayerCards ? 60 : 80,
                         angleForSecondCard: 100,
                         leftForBot: 0,
                         topForBot: 0.085,
@@ -501,7 +520,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                             userBetState('thirdPlayer') ==
                                                 BetState.fold)
                                           callTag(
-                                              color: Colors.red, title: 'FOLD'),
+                                              color: Colors.red,
+                                              title: 'RECHECK'),
                                         if (hasUserCalled('thirdPlayer') &&
                                             userBetState('thirdPlayer') ==
                                                 BetState.recheck)
@@ -522,7 +542,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                       ]),
                                 ),
                                 Column(children: [
-                                  callTag(color: Colors.red, title: 'HIGH'),
+                                  callTag(color: Colors.red, title: 'SUM'),
                                   Spacing()
                                       .verticalSpaceWithRatio(context, 0.02),
                                   callLabel(
@@ -629,12 +649,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       Spacing().verticalSpaceWithRatio(context, 0.01),
                       horizontalBotWithCard(
                           rightForFirstCard:
-                              !showTwoPlayerCards ? 0.036 : 0.028,
-                          topForFirstCard: 0.001,
+                              !showTwoPlayerCards ? 0.042 : 0.028,
+                          topForFirstCard: !showTwoPlayerCards ? 0.015 : 0.001,
                           rightForSecondCard:
                               !showTwoPlayerCards ? 0.044 : 0.032,
-                          topForSecondCard: 0.05,
-                          angleForFirstCard: -80,
+                          topForSecondCard: !showTwoPlayerCards ? 0.052 : 0.04,
+                          angleForFirstCard: !showTwoPlayerCards ? -65 : -80,
                           angleForSecondCard: -100,
                           rightForBot: 0,
                           topForBot: 0.085,
@@ -665,7 +685,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                       ],
                     ),
                     Positioned(
-                      left: widthWithScreenRatio(context, 0.42),
+                      left: widthWithScreenRatio(context, 0.43),
                       bottom: heightWithScreenRatio(context, 0.01),
                       child: verticalBotWithCard(
                           leftForFirstCard: 0.05,
@@ -688,6 +708,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                                 padding: const EdgeInsets.all(8.0),
                                 child: GestureDetector(
                                   onTap: () {
+                                    setState(() {
+                                      isUserFold = true;
+                                    });
                                     startFromUser(
                                         bet: BetState.fold, price: 0, bid: 0);
                                     startFromThirdPlayer();

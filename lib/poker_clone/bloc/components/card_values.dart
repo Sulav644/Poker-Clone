@@ -49,18 +49,3 @@ List<CardValue> cardValuesSeven = [
   CardValue.queen,
   CardValue.king
 ];
-List<CardValue> cardValuesEight = [
-  CardValue.nine,
-  CardValue.ten,
-  CardValue.jack,
-  CardValue.queen,
-  CardValue.king
-];
-List<CardValue> cardValuesNine = [
-  CardValue.ten,
-  CardValue.jack,
-  CardValue.queen,
-  CardValue.king,
-  CardValue.ace,
-  CardValue.two
-];
