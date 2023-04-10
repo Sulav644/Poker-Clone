@@ -83,35 +83,9 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
       }
       print('flush');
     } else {
-      print('four kind');
-      List<CardAndCount> cardAndCount = [];
-
-      List<PlayingCardView> filteredList = [];
-      emit(thirdPlayerCards);
-
-      for (var element in state) {
-        int count = 0;
-        print('start');
-
-        for (var i = 0; i < state.length; i++) {
-          if (element.card.value == state[i].card.value) {
-            print('${element.card.suit} ${state[i].card.value}');
-            count++;
-            print('countpre $count');
-          }
-        }
-
-        for (var newElement in state) {
-          if (element.card.value != newElement.card.value) {
-            filteredList.add(newElement);
-          }
-        }
-
-        emit([...filteredList]);
-        if (count > 1) {
-          print('count $count');
-          print('match ${element.card.suit} ${element.card.value}');
-        }
+      List<CardAndCount> list = checkRepeatCards(thirdPlayerCards);
+      for (var element in list) {
+        print('list ${element.cardValue} ${element.count}');
       }
     }
   }
@@ -161,5 +135,39 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     }
 
     return sequenceCount;
+  }
+
+  List<CardAndCount> checkRepeatCards(List<PlayingCardView> playingCards) {
+    print('four kind');
+    List<CardAndCount> cardAndCount = [];
+
+    List<PlayingCardView> filteredList = [];
+    emit(playingCards);
+
+    for (var element in state) {
+      int count = 0;
+      filteredList.length = 0;
+
+      for (var i = 0; i < state.length; i++) {
+        if (element.card.value == state[i].card.value) {
+          count++;
+        }
+      }
+      for (var newElement in state) {
+        if (element.card.value != newElement.card.value) {
+          filteredList.add(newElement);
+        }
+      }
+
+      emit([...filteredList]);
+
+      if (count > 1) {
+        print('${element.card.suit} ${element.card.value}');
+        print('count $count');
+        cardAndCount
+            .add(CardAndCount(cardValue: element.card.value, count: count));
+      }
+    }
+    return cardAndCount;
   }
 }
