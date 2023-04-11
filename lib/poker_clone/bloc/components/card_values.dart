@@ -1,48 +1,48 @@
 import 'package:playing_cards/playing_cards.dart';
 
-List<CardValue> cardValuesOne = [
+List<CardValue> cardValuesThreeToSeven = [
   CardValue.three,
   CardValue.four,
   CardValue.five,
   CardValue.six,
   CardValue.seven
 ];
-List<CardValue> cardValuesTwo = [
+List<CardValue> cardValuesFourToEight = [
   CardValue.four,
   CardValue.five,
   CardValue.six,
   CardValue.seven,
   CardValue.eight
 ];
-List<CardValue> cardValuesThree = [
+List<CardValue> cardValuesFiveToNine = [
   CardValue.five,
   CardValue.six,
   CardValue.seven,
   CardValue.eight,
   CardValue.nine
 ];
-List<CardValue> cardValuesFour = [
+List<CardValue> cardValuesSixToTen = [
   CardValue.six,
   CardValue.seven,
   CardValue.eight,
   CardValue.nine,
   CardValue.ten
 ];
-List<CardValue> cardValuesFive = [
+List<CardValue> cardValuesSevenToJack = [
   CardValue.seven,
   CardValue.eight,
   CardValue.nine,
   CardValue.ten,
   CardValue.jack
 ];
-List<CardValue> cardValuesSix = [
+List<CardValue> cardValuesEightToQueen = [
   CardValue.eight,
   CardValue.nine,
   CardValue.ten,
   CardValue.jack,
   CardValue.queen
 ];
-List<CardValue> cardValuesSeven = [
+List<CardValue> cardValuesNineToKing = [
   CardValue.nine,
   CardValue.ten,
   CardValue.jack,
