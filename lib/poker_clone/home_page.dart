@@ -340,7 +340,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         showTwoPlayerCards = true;
       });
       if (!shownWinner) {
-        context.read<WinnerCubit>().selectWinner(cardsList);
+        context
+            .read<WinnerCubit>()
+            .selectWinner(cardsList, isFirstPlayerFold, isUserFold);
         setState(() {
           shownWinner = true;
         });
@@ -1073,7 +1075,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: widthWithScreenRatio(context, 0.08),
                         alignment: Alignment.center,
                         child: PlayingCardView(
-                          card: cardsList[7].card,
+                          card: cardsList[5].card,
                         ),
                       ),
                     ),
@@ -1088,7 +1090,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         height: widthWithScreenRatio(context, 0.08),
                         alignment: Alignment.center,
                         child: PlayingCardView(
-                          card: cardsList[8].card,
+                          card: cardsList[6].card,
                         ),
                       ),
                     ),
@@ -1128,7 +1130,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               height: widthWithScreenRatio(context, 0.08),
                               alignment: Alignment.center,
                               child: PlayingCardView(
-                                card: cardsList[6].card,
+                                card: cardsList[7].card,
                               ),
                             ),
                     ),
@@ -1148,7 +1150,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               height: widthWithScreenRatio(context, 0.08),
                               alignment: Alignment.center,
                               child: PlayingCardView(
-                                card: cardsList[6].card,
+                                card: cardsList[8].card,
                               ),
                             ),
                     ),
