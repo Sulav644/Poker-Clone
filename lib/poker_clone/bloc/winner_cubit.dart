@@ -7,16 +7,29 @@ enum Winner { firstPlayer, secondPlayer, thirdPlayer, fourthPlayer, none }
 enum WinnerRanks {
   royalFlush,
   straightFlush,
-
+  fourOfAKind,
+  fullHouse,
   flush,
   straight,
-  fullHouse,
-  fourOfAKind,
+
   twoPairs,
   onePair,
-  threePairs,
+  highCard,
   threeOfAKind
 }
+
+final winnerRanks = [
+  WinnerRanks.royalFlush,
+  WinnerRanks.straightFlush,
+  WinnerRanks.fourOfAKind,
+  WinnerRanks.fullHouse,
+  WinnerRanks.flush,
+  WinnerRanks.straight,
+  WinnerRanks.threeOfAKind,
+  WinnerRanks.twoPairs,
+  WinnerRanks.onePair,
+  WinnerRanks.highCard,
+];
 
 final cardRanks = [
   CardValue.two,
@@ -55,6 +68,18 @@ class CardAndCount {
       {required this.cardValue, required this.count, required this.rank});
 }
 
+class CardTypeCountWithIndex {
+  bool hasCard;
+  int index;
+  CardTypeCountWithIndex({required this.hasCard, required this.index});
+}
+
+class SuitCountWithIndex {
+  int count;
+  List<int> index;
+  SuitCountWithIndex({required this.count, required this.index});
+}
+
 final royalFlushList = [
   CardValue.ace,
   CardValue.king,
@@ -69,118 +94,31 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     List<PlayingCardView> fiveMainCards = [];
 
     List<CardHandsAndValues> cardsHandsAndValuesList = [];
-    List<PlayingCardView> firstPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.queen)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.jack)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> secondPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.seven)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.eight)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.nine)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> thirdPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> fifthPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> sixthPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.king)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> seventhPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> eightPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.nine)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> ninePlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.three)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.four)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.five)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.seven)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.seven)),
-    ];
-    List<PlayingCardView> tenPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.jack)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.nine)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ten)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> elevenPlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.five)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.four)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.eight)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.seven)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
-    List<PlayingCardView> twelvePlayerCards = [
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.hearts, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.six)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.eight)),
-      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.two)),
-      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.seven)),
-      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.three)),
-    ];
+    List<PlayingCardView> firstPlayerCards = [];
+    List<PlayingCardView> secondPlayerCards = [];
+    List<PlayingCardView> thirdPlayerCards = [];
+
     List<PlayingCardView> fourthPlayerCards = [];
 
     for (var i = 0; i < 5; i++) {
       fiveMainCards.add(totalCardsList[i]);
     }
-
+    print('fiveCards ${fiveMainCards.length}');
+    firstPlayerCards = addCardsInList(firstPlayerCards, totalCardsList, 5, 6);
+    secondPlayerCards = addCardsInList(secondPlayerCards, totalCardsList, 7, 8);
+    thirdPlayerCards = addCardsInList(thirdPlayerCards, totalCardsList, 9, 10);
     fourthPlayerCards =
         addCardsInList(fourthPlayerCards, totalCardsList, 11, 12);
 
-    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(ninePlayerCards));
-    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(tenPlayerCards));
-    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(elevenPlayerCards));
-    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(twelvePlayerCards));
+    print('firstPlayerCard ${firstPlayerCards.length}');
+    print('secondPlayerCard ${secondPlayerCards.length}');
+    print('thirdPlayerCard ${thirdPlayerCards.length}');
+    print('fourthPlayerCard ${fourthPlayerCards.length}');
+    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(firstPlayerCards));
+
+    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(secondPlayerCards));
+    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(thirdPlayerCards));
+    cardsHandsAndValuesList.add(checkTheHandRanksOfCard(fourthPlayerCards));
     print('length ${cardsHandsAndValuesList.length}');
 
     for (var element in cardsHandsAndValuesList) {
@@ -196,6 +134,55 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     for (var element in cardsHandsAndValuesList) {
       print('handRanks ${element.handRank}');
     }
+    int initialWinnerRank = 10;
+    for (var element in cardsHandsAndValuesList) {
+      for (var newElement in cardsHandsAndValuesList) {
+        if (initialWinnerRank > winnerRanks.indexOf(newElement.winnerRanks)) {
+          initialWinnerRank = winnerRanks.indexOf(newElement.winnerRanks);
+        }
+      }
+    }
+    print('winnerRank $initialWinnerRank');
+    int winnerRankCount = 0;
+    for (var element in cardsHandsAndValuesList) {
+      if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
+        winnerRankCount++;
+      }
+    }
+    print('winnerRankCount $winnerRankCount');
+    int initialCardRank = 15;
+    if (winnerRankCount > 1) {
+      List<CardHandsAndValues> cardsListForMultipleWinner = [];
+      for (var element in cardsHandsAndValuesList) {
+        if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
+          cardsListForMultipleWinner.add(element);
+        }
+      }
+      print('cardsHandsAndValuesList ${cardsHandsAndValuesList.length}');
+      print('cardsListForMultipleWinner ${cardsListForMultipleWinner.length}');
+      for (var element in cardsListForMultipleWinner) {
+        for (var newElement in element.cardAndCount) {
+          if (initialCardRank > newElement.rank) {
+            initialCardRank = newElement.rank;
+          }
+        }
+      }
+      print('cardRank $initialCardRank');
+      for (var element in cardsListForMultipleWinner) {
+        for (var newElement in element.cardAndCount) {
+          if (newElement.rank == initialCardRank) {
+            print('winnerGroup ${cardsListForMultipleWinner.indexOf(element)}');
+          }
+        }
+      }
+    } else {
+      for (var element in cardsHandsAndValuesList) {
+        if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
+          print('winnerIndex ${cardsHandsAndValuesList.indexOf(element)}');
+        }
+      }
+    }
+
     int initialValue = 10;
     for (var element in cardsHandsAndValuesList) {
       for (var newElement in cardsHandsAndValuesList) {
@@ -223,16 +210,69 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
                 cardValue: royalFlushList[index],
                 count: 1,
                 rank: cardRanks.indexOf(royalFlushList[index]))));
-    List<int> counts = checkForSameSuit(playerCard);
-    if (counts[0] > 4 || counts[1] > 4 || counts[2] > 4 || counts[3] > 4) {
-      List<bool> hasCardOfTypes = checkForRoyalFlush(playerCard);
+    List<SuitCountWithIndex> counts = checkForSameSuit(playerCard);
+    if (counts[0].count > 4 ||
+        counts[1].count > 4 ||
+        counts[2].count > 4 ||
+        counts[3].count > 4) {
+      print(
+          'countIndex ${counts[0].count} ${counts[1].count} ${counts[2].count} ${counts[3].count}');
+      print(
+          'countIndex ${counts[0].index} ${counts[1].index} ${counts[2].index} ${counts[3].index}');
+      List<CardTypeCountWithIndex> hasCardOfTypes =
+          checkForRoyalFlush(playerCard);
+      print(
+          'cardIndex ${hasCardOfTypes[0].hasCard} ${hasCardOfTypes[1].hasCard} ${hasCardOfTypes[2].hasCard} ${hasCardOfTypes[3].hasCard} ${hasCardOfTypes[4].hasCard}');
+      print(
+          'cardIndex ${hasCardOfTypes[0].index} ${hasCardOfTypes[1].index} ${hasCardOfTypes[2].index} ${hasCardOfTypes[3].index} ${hasCardOfTypes[4].index}');
       List<int> sequencesOfCard = checkForStraightFlush(playerCard);
+      int checkIfIndexMatches(
+          {required int hasCardOfTypeIndex, required int suitGroupIndex}) {
+        int isMatch = 0;
+        for (var element in counts[suitGroupIndex].index) {
+          if (hasCardOfTypes[hasCardOfTypeIndex].index == element) {
+            isMatch++;
+            print('index $element');
+          }
+        }
 
-      if (hasCardOfTypes[0] &&
-          hasCardOfTypes[1] &&
-          hasCardOfTypes[2] &&
-          hasCardOfTypes[3] &&
-          hasCardOfTypes[4]) {
+        print('isMatch $isMatch');
+        return isMatch;
+      }
+
+      int suitGroupIndex = 0;
+      if (counts[0].count > 4) {
+        suitGroupIndex = 0;
+      } else if (counts[1].count > 4) {
+        suitGroupIndex = 1;
+      } else if (counts[2].count > 4) {
+        suitGroupIndex = 2;
+      } else if (counts[3].count > 4) {
+        suitGroupIndex = 3;
+      }
+
+      print(
+          'checkMatches ${checkIfIndexMatches(hasCardOfTypeIndex: 4, suitGroupIndex: suitGroupIndex)}');
+      if ((hasCardOfTypes[0].hasCard &&
+              checkIfIndexMatches(
+                      hasCardOfTypeIndex: 0, suitGroupIndex: suitGroupIndex) ==
+                  1) &&
+          (hasCardOfTypes[1].hasCard &&
+              checkIfIndexMatches(
+                      hasCardOfTypeIndex: 1, suitGroupIndex: suitGroupIndex) ==
+                  1) &&
+          (hasCardOfTypes[2].hasCard &&
+              checkIfIndexMatches(
+                      hasCardOfTypeIndex: 2, suitGroupIndex: suitGroupIndex) ==
+                  1) &&
+          (hasCardOfTypes[3].hasCard &&
+              checkIfIndexMatches(
+                      hasCardOfTypeIndex: 3, suitGroupIndex: suitGroupIndex) ==
+                  1) &&
+          (hasCardOfTypes[4].hasCard &&
+              checkIfIndexMatches(
+                      hasCardOfTypeIndex: 4, suitGroupIndex: suitGroupIndex) ==
+                  1)) {
         print('royal flush');
         cardsHandsAndValues = CardHandsAndValues(
             winnerRanks: WinnerRanks.royalFlush,
@@ -359,8 +399,20 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
             cardValuesThreeToSeven.length,
             (index) => CardAndCount(
                 cardValue: cardValuesThreeToSeven[index],
-                count: cardValuesThreeToSeven.length,
+                count: 1,
                 rank: cardRanks.indexOf(cardValuesThreeToSeven[index])),
+          ),
+        );
+      } else {
+        cardsHandsAndValues = CardHandsAndValues(
+          winnerRanks: WinnerRanks.highCard,
+          handRank: 9,
+          cardAndCount: List.generate(
+            playerCard.length,
+            (index) => CardAndCount(
+                cardValue: playerCard[index].card.value,
+                count: 1,
+                rank: cardRanks.indexOf(playerCard[index].card.value)),
           ),
         );
       }
@@ -391,20 +443,26 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     ];
   }
 
-  List<bool> checkForRoyalFlush(List<PlayingCardView> playerCard) {
-    bool hasAceCard = cardTypeCount(playerCard, CardValue.ace);
-    bool hasKingCard = cardTypeCount(playerCard, CardValue.king);
-    bool hasQueenCard = cardTypeCount(playerCard, CardValue.queen);
-    bool hasJackCard = cardTypeCount(playerCard, CardValue.jack);
-    bool hasTenCard = cardTypeCount(playerCard, CardValue.ten);
+  List<CardTypeCountWithIndex> checkForRoyalFlush(
+      List<PlayingCardView> playerCard) {
+    CardTypeCountWithIndex hasAceCard =
+        cardTypeCount(playerCard, CardValue.ace);
+    CardTypeCountWithIndex hasKingCard =
+        cardTypeCount(playerCard, CardValue.king);
+    CardTypeCountWithIndex hasQueenCard =
+        cardTypeCount(playerCard, CardValue.queen);
+    CardTypeCountWithIndex hasJackCard =
+        cardTypeCount(playerCard, CardValue.jack);
+    CardTypeCountWithIndex hasTenCard =
+        cardTypeCount(playerCard, CardValue.ten);
     return [hasAceCard, hasKingCard, hasQueenCard, hasJackCard, hasTenCard];
   }
 
-  List<int> checkForSameSuit(List<PlayingCardView> playerCards) {
-    int count = suitCount(playerCards, Suit.clubs);
-    int countTwo = suitCount(playerCards, Suit.diamonds);
-    int countThree = suitCount(playerCards, Suit.hearts);
-    int countFour = suitCount(playerCards, Suit.spades);
+  List<SuitCountWithIndex> checkForSameSuit(List<PlayingCardView> playerCards) {
+    SuitCountWithIndex count = suitCount(playerCards, Suit.clubs);
+    SuitCountWithIndex countTwo = suitCount(playerCards, Suit.diamonds);
+    SuitCountWithIndex countThree = suitCount(playerCards, Suit.hearts);
+    SuitCountWithIndex countFour = suitCount(playerCards, Suit.spades);
     return [count, countTwo, countThree, countFour];
   }
 
@@ -420,25 +478,32 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     return playercardsList;
   }
 
-  int suitCount(List<PlayingCardView> playerCards, Suit suit) {
+  SuitCountWithIndex suitCount(List<PlayingCardView> playerCards, Suit suit) {
+    SuitCountWithIndex suitCountWithIndex =
+        SuitCountWithIndex(count: 0, index: []);
     int suitCount = 0;
+    List<int> index = [];
     for (var element in playerCards) {
       if (element.card.suit == suit) {
         suitCount++;
+        index.add(playerCards.indexOf(element));
       }
     }
-    return suitCount;
+    suitCountWithIndex = SuitCountWithIndex(count: suitCount, index: index);
+    return suitCountWithIndex;
   }
 
-  bool cardTypeCount(List<PlayingCardView> playerCards, CardValue value) {
-    bool hasCard = false;
-
+  CardTypeCountWithIndex cardTypeCount(
+      List<PlayingCardView> playerCards, CardValue value) {
+    CardTypeCountWithIndex cardTypeCountWithIndex =
+        CardTypeCountWithIndex(hasCard: false, index: 0);
     for (var element in playerCards) {
       if (element.card.value == value) {
-        hasCard = true;
+        cardTypeCountWithIndex = CardTypeCountWithIndex(
+            hasCard: true, index: playerCards.indexOf(element));
       }
     }
-    return hasCard;
+    return cardTypeCountWithIndex;
   }
 
   int sequenceOrderCount(

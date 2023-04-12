@@ -39,6 +39,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool isUserFold = false;
   bool isThirdPlayerFold = false;
   bool isFourthPlayerFold = false;
+  bool shownWinner = false;
   List<PlayingCardView> cardsList = [];
   int round = 1;
   final callLabelColor = Color.fromARGB(255, 117, 135, 150);
@@ -139,7 +140,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       for (var i = 0; i < 13; i++) {
         cardsList.add(context.read<CardsDistributionCubit>().selectCard());
       }
-      context.read<WinnerCubit>().selectWinner(cardsList);
+
       setState(() {
         isSelectedRandomCard = true;
       });
@@ -338,7 +339,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       setState(() {
         showTwoPlayerCards = true;
       });
-      context.read<WinnerCubit>().selectWinner(cardsList);
+      if (!shownWinner) {
+        context.read<WinnerCubit>().selectWinner(cardsList);
+        setState(() {
+          shownWinner = true;
+        });
+      }
     }
 
     String getUserCallPrice(String title) => userCallList[
