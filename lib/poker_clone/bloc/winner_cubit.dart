@@ -2,12 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playing_cards/playing_cards.dart';
 import 'package:poker_clone/poker_clone/bloc/components/card_values.dart';
 
-enum Winner {
-  firstPlayer,
-  secondPlayer,
-  thirdPlayer,
-  fourthPlayer,
-}
+enum Winner { firstPlayer, secondPlayer, thirdPlayer, fourthPlayer, none }
 
 enum WinnerRanks {
   royalFlush,
@@ -100,11 +95,20 @@ class WinnerTypeAndIndex {
 
 class WinnerCubit extends Cubit<List<PlayingCardView>> {
   WinnerCubit() : super([]);
-  void selectWinner(List<PlayingCardView> totalCardsList, bool isBotOneFold,
-      bool isUserFold) {
+  WinnerTypeAndIndex selectWinner(List<PlayingCardView> totalCardsList,
+      bool isBotOneFold, bool isUserFold) {
     List<PlayingCardView> fiveMainCards = [];
 
     List<CardHandsAndValues> cardsHandsAndValuesList = [];
+    List<PlayingCardView> highCards = [
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.ace)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.nine)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.two)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.three)),
+      PlayingCardView(card: PlayingCard(Suit.diamonds, CardValue.jack)),
+      PlayingCardView(card: PlayingCard(Suit.spades, CardValue.five)),
+      PlayingCardView(card: PlayingCard(Suit.clubs, CardValue.king)),
+    ];
     List<PlayingCardView> firstPlayerCards = [];
     List<PlayingCardView> secondPlayerCards = [];
 
@@ -125,15 +129,16 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     secondPlayerCards = addCardsInList(secondPlayerCards, totalCardsList, 5, 6);
     thirdPlayerCards = addCardsInList(thirdPlayerCards, totalCardsList, 9, 10);
     fourthPlayerCards = addCardsInList(fourthPlayerCards, totalCardsList, 7, 8);
+    cardsHandsAndValuesList.add(
+        checkTheHandRanksOfCard(!isBotOneFold ? firstPlayerCards : highCards));
 
-    cardsHandsAndValuesList
-        .add(checkTheHandRanksOfCard(!isBotOneFold ? firstPlayerCards : []));
-
-    cardsHandsAndValuesList
-        .add(checkTheHandRanksOfCard(!isUserFold ? secondPlayerCards : []));
+    cardsHandsAndValuesList.add(
+        checkTheHandRanksOfCard(!isUserFold ? secondPlayerCards : highCards));
 
     cardsHandsAndValuesList.add(checkTheHandRanksOfCard(thirdPlayerCards));
     cardsHandsAndValuesList.add(checkTheHandRanksOfCard(fourthPlayerCards));
+    print('isBotOneFold $isBotOneFold');
+    print('isUserFold $isUserFold');
 
     print('length ${cardsHandsAndValuesList.length}');
 
@@ -151,107 +156,37 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     for (var element in cardsHandsAndValuesList) {
       print('handRanks ${element.handRank}');
     }
+
     WinnerTypeAndIndex winner = winnerTypeAndIndex(cardsHandsAndValuesList);
     print('winnerType ${winner.winnerType} ${winner.winnerIndex}');
+    return winner;
   }
 
   WinnerTypeAndIndex winnerTypeAndIndex(
       List<CardHandsAndValues> cardsHandsAndValuesList) {
-    int initialWinnerRank = 10;
-    for (var element in cardsHandsAndValuesList) {
-      for (var newElement in cardsHandsAndValuesList) {
-        if (initialWinnerRank > winnerRanks.indexOf(newElement.winnerRanks)) {
-          initialWinnerRank = winnerRanks.indexOf(newElement.winnerRanks);
-        }
-      }
-    }
-    print('winnerRank $initialWinnerRank');
-    int winnerRankCount = 0;
-    for (var element in cardsHandsAndValuesList) {
-      if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
-        winnerRankCount++;
-      }
-    }
-    print('winnerRankCount $winnerRankCount');
-    int initialCardRank = 15;
     WinnerTypeAndIndex winnerTypeAndIndex = WinnerTypeAndIndex(
-        winnerType: WinnerRanks.royalFlush, winnerIndex: Winner.firstPlayer);
-    if (winnerRankCount > 1) {
-      List<CardHandsAndValues> cardsListForMultipleWinner = [];
-      for (var element in cardsHandsAndValuesList) {
-        if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
-          cardsListForMultipleWinner.add(element);
-        }
+        winnerType: WinnerRanks.flush, winnerIndex: Winner.firstPlayer);
+    int initialWinnerRank = 10;
+
+    for (var element in cardsHandsAndValuesList) {
+      if (initialWinnerRank > winnerRanks.indexOf(element.winnerRanks)) {
+        initialWinnerRank = winnerRanks.indexOf(element.winnerRanks);
       }
-      print('cardsHandsAndValuesList ${cardsHandsAndValuesList.length}');
-      print('cardsListForMultipleWinner ${cardsListForMultipleWinner.length}');
-      for (var element in cardsListForMultipleWinner) {
-        for (var newElement in element.cardAndCount) {
-          if (initialCardRank > newElement.rank) {
-            initialCardRank = newElement.rank;
-          }
-        }
-      }
-      print('cardRank $initialCardRank');
-      int countForMultipleWinnerLowestCardRankRepeat = 0;
-      int winnerGroup = 0;
-      for (var element in cardsListForMultipleWinner) {
-        for (var newElement in element.cardAndCount) {
-          if (newElement.rank == initialCardRank) {
-            countForMultipleWinnerLowestCardRankRepeat++;
-            winnerGroup = cardsListForMultipleWinner.indexOf(element);
-            print('winnerGroup ${cardsListForMultipleWinner.indexOf(element)}');
-          }
-        }
-      }
-      winnerTypeAndIndex = WinnerTypeAndIndex(
-          winnerType: winnerRanks[initialCardRank],
-          winnerIndex: Winner.values[winnerGroup]);
-      if (countForMultipleWinnerLowestCardRankRepeat > 1) {
-        List<int> listForGettingLowerRank = [];
-        for (var element in cardsListForMultipleWinner) {
-          for (var newElement in element.cardAndCount) {
-            if (newElement.rank != initialCardRank) {
-              print('lowestIndex ${newElement.rank}');
-              listForGettingLowerRank.add(newElement.rank);
-            }
-          }
-        }
-        int lowestValue = 15;
-        for (var element in listForGettingLowerRank) {
-          if (lowestValue > element) {
-            lowestValue = element;
-          }
-        }
-        int winnerGroup = 0;
-        for (var element in cardsListForMultipleWinner) {
-          for (var newElement in element.cardAndCount) {
-            if (newElement.rank == lowestValue) {
-              winnerGroup = cardsListForMultipleWinner.indexOf(element);
-              print(
-                  'winnerGroupSingle ${cardsListForMultipleWinner.indexOf(element)}');
-            }
-          }
-        }
-        winnerTypeAndIndex = WinnerTypeAndIndex(
-            winnerType: winnerRanks[lowestValue],
-            winnerIndex: Winner.values[winnerGroup]);
-        print('lowestValue $lowestValue');
-      }
-      return winnerTypeAndIndex;
-    } else {
-      int winnerGroup = 0;
-      for (var element in cardsHandsAndValuesList) {
-        if (winnerRanks.indexOf(element.winnerRanks) == initialWinnerRank) {
-          winnerGroup = cardsHandsAndValuesList.indexOf(element);
-          print('winnerIndex ${cardsHandsAndValuesList.indexOf(element)}');
-        }
-      }
-      winnerTypeAndIndex = WinnerTypeAndIndex(
-          winnerType: winnerRanks[initialWinnerRank],
-          winnerIndex: Winner.values[winnerGroup]);
-      return winnerTypeAndIndex;
     }
+
+    print('winnerRankCount $initialWinnerRank');
+    int winnerGroupIndex = 0;
+    for (var element in cardsHandsAndValuesList) {
+      if (element.handRank == initialWinnerRank) {
+        winnerGroupIndex = cardsHandsAndValuesList.indexOf(element);
+      }
+    }
+    print('winnerGroupIndex $winnerGroupIndex');
+    winnerTypeAndIndex = WinnerTypeAndIndex(
+        winnerType: winnerRanks[initialWinnerRank],
+        winnerIndex: Winner.values[winnerGroupIndex]);
+
+    return winnerTypeAndIndex;
   }
 
   CardHandsAndValues checkTheHandRanksOfCard(List<PlayingCardView> playerCard) {

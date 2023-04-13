@@ -40,6 +40,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   bool isThirdPlayerFold = false;
   bool isFourthPlayerFold = false;
   bool shownWinner = false;
+  bool hasWinnerTypeAndIndexFinalized = false;
+  WinnerTypeAndIndex winnerTypeAndIndex = WinnerTypeAndIndex(
+      winnerType: WinnerRanks.flush, winnerIndex: Winner.none);
   List<PlayingCardView> cardsList = [];
   int round = 1;
   final callLabelColor = Color.fromARGB(255, 117, 135, 150);
@@ -340,13 +343,21 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         showTwoPlayerCards = true;
       });
       if (!shownWinner) {
-        context
-            .read<WinnerCubit>()
-            .selectWinner(cardsList, isFirstPlayerFold, isUserFold);
         setState(() {
-          shownWinner = true;
+          winnerTypeAndIndex = context
+              .read<WinnerCubit>()
+              .selectWinner(cardsList, isFirstPlayerFold, isUserFold);
         });
       }
+    }
+    if (winnerTypeAndIndex.winnerIndex != Winner.none &&
+        !hasWinnerTypeAndIndexFinalized) {
+      Future.delayed(Duration(seconds: 1), () {
+        setState(() {
+          shownWinner = true;
+          hasWinnerTypeAndIndexFinalized = true;
+        });
+      });
     }
 
     String getUserCallPrice(String title) => userCallList[
@@ -389,19 +400,19 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                               title: 'bot2',
                               bits: 2),
                           verticalBotWithCard(
-                              leftForFirstCard:
-                                  !showTwoPlayerCards ? 0.115 : 0.1,
-                              topForFirstCard:
-                                  !showTwoPlayerCards ? 0.034 : 0.028,
-                              angleForFirstCard: -15,
-                              leftForSecondCard:
-                                  !showTwoPlayerCards ? 0.078 : 0.052,
-                              topForSecondCard:
-                                  !showTwoPlayerCards ? 0.03 : 0.028,
-                              angleForSecondCard: -170,
-                              leftForBot: 0.09,
-                              topForBot: 0,
-                              showTwoPlayerCards: showTwoPlayerCards),
+                            leftForFirstCard: !showTwoPlayerCards ? 0.115 : 0.1,
+                            topForFirstCard:
+                                !showTwoPlayerCards ? 0.034 : 0.028,
+                            angleForFirstCard: -15,
+                            leftForSecondCard:
+                                !showTwoPlayerCards ? 0.078 : 0.052,
+                            topForSecondCard:
+                                !showTwoPlayerCards ? 0.03 : 0.028,
+                            angleForSecondCard: -170,
+                            leftForBot: 0.09,
+                            topForBot: 0,
+                            showTwoPlayerCards: showTwoPlayerCards,
+                          ),
                           Column(children: [
                             Spacing().verticalSpaceWithRatio(context, 0.08),
                             if (hasUserCalled('fourthPlayer') &&
@@ -458,7 +469,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   height: heightWithScreenRatio(context, 0.53),
                   alignment: Alignment.center,
                   child: (() {
-                    if (!showStartGameDialog) {
+                    if (!showStartGameDialog || shownWinner) {
                       return Container(
                         width: widthWithScreenRatio(context, 0.45),
                         height: heightWithScreenRatio(context, 0.3),
@@ -471,7 +482,67 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Text(
-                                'Start the game?',
+                                !shownWinner
+                                    ? 'Start the game?'
+                                    : '${(() {
+                                        if (winnerTypeAndIndex.winnerIndex ==
+                                            Winner.firstPlayer) {
+                                          return 'Bot3';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerIndex ==
+                                            Winner.secondPlayer) {
+                                          return 'You';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerIndex ==
+                                            Winner.thirdPlayer) {
+                                          return 'Bot1';
+                                        } else {
+                                          return 'Bot2';
+                                        }
+                                      }())}'
+                                        ' won with '
+                                        '${(() {
+                                        if (winnerTypeAndIndex.winnerType ==
+                                            WinnerRanks.royalFlush) {
+                                          return 'Royal Flush';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.straightFlush) {
+                                          return 'Straight Flush';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.fourOfAKind) {
+                                          return 'Four of a kind';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.fullHouse) {
+                                          return 'Full House';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.flush) {
+                                          return 'Flush';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.straight) {
+                                          return 'Straight';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.threeOfAKind) {
+                                          return 'Three of a kind';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.twoPairs) {
+                                          return 'Two Pairs';
+                                        } else if (winnerTypeAndIndex
+                                                .winnerType ==
+                                            WinnerRanks.onePair) {
+                                          return 'One Pair';
+                                        } else {
+                                          return 'High Card';
+                                        }
+                                      }())}'
+                                        '. Do you want to continue ?',
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                     color: Color.fromARGB(255, 39, 12, 2),
                                     fontSize: 20,
@@ -646,56 +717,68 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                   }()),
                 ),
                 Container(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      PlayerIdentity(
-                          context: context,
-                          width: 0.09,
-                          title: 'bot3',
-                          bits: 0),
-                      Spacing().verticalSpaceWithRatio(context, 0.01),
-                      horizontalBotWithCard(
-                          rightForFirstCard:
-                              !showTwoPlayerCards ? 0.042 : 0.028,
-                          topForFirstCard: !showTwoPlayerCards ? 0.015 : 0.001,
-                          rightForSecondCard:
-                              !showTwoPlayerCards ? 0.044 : 0.032,
-                          topForSecondCard: !showTwoPlayerCards ? 0.052 : 0.04,
-                          angleForFirstCard: !showTwoPlayerCards ? -65 : -80,
-                          angleForSecondCard: -100,
-                          rightForBot: 0,
-                          topForBot: 0.085,
-                          showTwoPlayerCards: showTwoPlayerCards),
-                      Spacing().verticalSpaceWithRatio(context, 0.01),
-                      PlayerIdentity(
-                          context: context, width: 0.08, title: '', bits: 1)
-                    ],
-                  ),
+                  child: !isFirstPlayerFold
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            PlayerIdentity(
+                                context: context,
+                                width: 0.09,
+                                title: 'bot3',
+                                bits: 0),
+                            Spacing().verticalSpaceWithRatio(context, 0.01),
+                            horizontalBotWithCard(
+                                rightForFirstCard:
+                                    !showTwoPlayerCards ? 0.042 : 0.028,
+                                topForFirstCard:
+                                    !showTwoPlayerCards ? 0.015 : 0.001,
+                                rightForSecondCard:
+                                    !showTwoPlayerCards ? 0.044 : 0.032,
+                                topForSecondCard:
+                                    !showTwoPlayerCards ? 0.052 : 0.04,
+                                angleForFirstCard:
+                                    !showTwoPlayerCards ? -65 : -80,
+                                angleForSecondCard: -100,
+                                rightForBot: 0,
+                                topForBot: 0.085,
+                                showTwoPlayerCards: showTwoPlayerCards),
+                            Spacing().verticalSpaceWithRatio(context, 0.01),
+                            PlayerIdentity(
+                                context: context,
+                                width: 0.08,
+                                title: '',
+                                bits: 1)
+                          ],
+                        )
+                      : Container(
+                          width: widthWithScreenRatio(context, 0.12),
+                        ),
                 )
               ]),
               Container(
                 height: heightWithScreenRatio(context, 0.2),
                 child: Stack(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                            width: widthWithScreenRatio(context, 0.2),
-                            height: widthWithScreenRatio(context, 0.11),
-                            alignment: Alignment.bottomCenter,
-                            child: PlayerIdentity(
-                                context: context,
-                                width: 0.2,
-                                title: 'user',
-                                bits: 0)),
-                      ],
-                    ),
-                    Positioned(
-                      left: widthWithScreenRatio(context, 0.43),
-                      bottom: heightWithScreenRatio(context, 0.01),
-                      child: verticalBotWithCard(
+                    if (!isUserFold)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                              width: widthWithScreenRatio(context, 0.2),
+                              height: widthWithScreenRatio(context, 0.11),
+                              alignment: Alignment.bottomCenter,
+                              child: PlayerIdentity(
+                                  context: context,
+                                  width: 0.2,
+                                  title: 'user',
+                                  bits: 0)),
+                        ],
+                      ),
+                    if (!isUserFold)
+                      Positioned(
+                        left: widthWithScreenRatio(context, 0.43),
+                        bottom: heightWithScreenRatio(context, 0.01),
+                        child: verticalBotWithCard(
                           leftForFirstCard: 0.05,
                           bottomForFirstCard: 0.006,
                           angleForFirstCard: -10,
@@ -704,8 +787,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           angleForSecondCard: 20,
                           leftForBot: 0.09,
                           bottomForBot: 0,
-                          showTwoPlayerCards: showTwoPlayerCards),
-                    ),
+                          showTwoPlayerCards: showTwoPlayerCards,
+                        ),
+                      ),
                     if (showUserCallOptions)
                       Container(
                         width: widthWithScreenRatio(context, 1),
