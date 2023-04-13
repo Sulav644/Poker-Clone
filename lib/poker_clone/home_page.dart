@@ -1,8 +1,5 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:playing_cards/playing_cards.dart';
@@ -12,24 +9,8 @@ import 'package:poker_clone/poker_clone/bloc/winner_cubit.dart';
 import 'package:poker_clone/poker_clone/components/app_sections/body_section.dart';
 import 'package:poker_clone/poker_clone/components/app_sections/footer_section.dart';
 import 'package:poker_clone/poker_clone/components/app_sections/header_section.dart';
-import 'package:poker_clone/poker_clone/components/player_identity.dart';
-import 'package:poker_clone/poker_clone/components/score_counter.dart';
-import 'package:poker_clone/poker_clone/components/settings_widget.dart';
-import 'package:restart_app/restart_app.dart';
-import 'package:simple_animations/timeline_tween/timeline_tween.dart';
-import 'package:supercharged/supercharged.dart';
-
 import 'bloc/app_logic_cubits.dart';
 import 'components/helper_widgets.dart';
-import 'components/horizontal_bots_with_cards.dart';
-import 'components/vertical_bots_with_cards.dart';
-
-final heightOf2nd3rdRow = 0.04;
-final heightOfLastEmptyRow = 0.05;
-final cellColor = Color.fromARGB(255, 240, 238, 218);
-final uniqueCellColor = Color.fromARGB(255, 206, 195, 185);
-
-enum AnimProps { top, left }
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -56,92 +37,30 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       winnerType: WinnerRanks.flush, winnerIndex: Winner.none);
   List<PlayingCardView> cardsList = [];
   int round = 1;
-  final callLabelColor = Color.fromARGB(255, 117, 135, 150);
+  final callLabelColor = const Color.fromARGB(255, 117, 135, 150);
   late PlayingCard firstCard, secondCard, thirdCard, fourthCard, fifthCard;
   late int highestCall,
       firstPlayerCall,
       secondPlayerCall,
       thirdPlayerCall,
       fourthPlayerCall;
-  late AnimationController firstPlayerController,
-      secondPlayerController,
-      thirdPlayerController,
-      userController;
-
-  late Animation<TimelineValue<AnimProps>> firstPlayerAnimation,
-      secondPlayerAnimation,
-      thirdPlayerAnimation,
-      userAnimation;
-  List<bool> visibileStates = [false, false, false, false];
 
   @override
   void initState() {
     super.initState();
-    firstCard = PlayingCard(Suit.clubs, CardValue.ace);
-    secondCard = PlayingCard(Suit.clubs, CardValue.ace);
-    thirdCard = PlayingCard(Suit.clubs, CardValue.ace);
-    fourthCard = PlayingCard(Suit.clubs, CardValue.ace);
-    fifthCard = PlayingCard(Suit.clubs, CardValue.ace);
+
     highestCall = 0;
     firstPlayerCall = 0;
     secondPlayerCall = 0;
     thirdPlayerCall = 0;
     fourthPlayerCall = 0;
-
-    firstPlayerController = AnimationController(
-      duration: const Duration(milliseconds: 1000),
-      vsync: this,
-    );
-
-    initAnimation();
-  }
-
-  void initAnimation() {
-    firstPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.top, tween: Tween(begin: 60.0, end: 120.0))
-        .parent
-        .animatedBy(firstPlayerController);
-  }
-
-  void startFirstPlayerAnimation(BuildContext context) {
-    firstPlayerAnimation = TimelineTween<AnimProps>()
-        // opacity
-        .addScene(
-          begin: 0.milliseconds,
-          end: 1000.milliseconds,
-          curve: Curves.ease,
-        )
-        .animate(AnimProps.left,
-            tween: Tween(
-                begin: widthWithScreenRatio(context, 0.009),
-                end: widthWithScreenRatio(context, 0.29)))
-        .parent
-        .animatedBy(firstPlayerController);
-  }
-
-  void resetAnimations() {
-    firstPlayerController.reverse();
-  }
-
-  @override
-  void dispose() {
-    firstPlayerController.dispose();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final random = new Random();
+    final random = Random();
     final isWinGame = context.watch<WinGameCubit>().state;
-    final cardVisibilty = context.watch<CardVisibilityCubit>().state;
     final showStartGameDialog = context.watch<StartGameCubit>().state;
-    final userCallList = context.watch<UserCallListCubit>().state;
     final showUserCallOptions = context.watch<ShowUserCallOptionsCubit>().state;
     final showRaisedPrices = context.watch<ShowRaisedPricesCubit>().state;
     final betState = context.watch<SetUserBetCubit>().state;
@@ -149,6 +68,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final hasFirstPlayerRecheck =
         context.watch<FirstPlayerRecheckStatusCubit>().state;
     final roundCounts = context.watch<RoundCountCubit>().state;
+    final turnRoundState = context.watch<TurnRoundCubit>().state;
+    context
+        .read<SetUserBetCubit>()
+        .toggleState(BetState.values[random.nextInt(4)]);
 
     if (!isSelectedRandomCard) {
       for (var i = 0; i < 13; i++) {
@@ -171,7 +94,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     void startFromFourthPlayer() {
       context.read<SetUserBetCubit>().toggleState(
           BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
-      Future.delayed(Duration(seconds: 2)).then((value) => setUserCall(
+      Future.delayed(const Duration(seconds: 2)).then((value) => setUserCall(
           name: 'fourthPlayer',
           bet: betState,
           cardIndex: [0, 1],
@@ -210,7 +133,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     void startFromThirdPlayer() {
       context.read<SetUserBetCubit>().toggleState(
           BetState.values[random.nextInt(hasFirstPlayerRecheck ? 4 : 3)]);
-      Future.delayed(Duration(seconds: 1)).then(
+      Future.delayed(const Duration(seconds: 1)).then(
         (value) => setUserCall(
             name: 'thirdPlayer',
             bet: betState,
@@ -275,13 +198,14 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           cardIndex: [0, 1],
           price: firstPlayerCall);
 
-      if (betState == BetState.recheck)
+      if (betState == BetState.recheck) {
         context.read<FirstPlayerRecheckStatusCubit>().toggleState();
+      }
       if (isUserFold) {
         startFromThirdPlayer();
         startFromFourthPlayer();
       } else {
-        Future.delayed(Duration(seconds: 2)).then((value) =>
+        Future.delayed(const Duration(seconds: 2)).then((value) =>
             context.read<ShowUserCallOptionsCubit>().toggleState(true));
       }
     }
@@ -293,12 +217,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       context.read<TotalBidPriceCubit>().addBid(bid);
       context.read<ShowUserCallOptionsCubit>().toggleState(false);
     }
-
-    final turnRoundState = context.watch<TurnRoundCubit>().state;
-
-    context
-        .read<SetUserBetCubit>()
-        .toggleState(BetState.values[random.nextInt(4)]);
 
     if (turnRoundState == Rounds.nextLevel) {
       context.read<UserCallListCubit>().resetState();
@@ -363,23 +281,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     if (winnerTypeAndIndex.winnerIndex != Winner.none &&
         !hasWinnerTypeAndIndexFinalized) {
-      Future.delayed(Duration(seconds: 1), () {
+      Future.delayed(const Duration(seconds: 1), () {
         setState(() {
           shownWinner = true;
           hasWinnerTypeAndIndexFinalized = true;
         });
       });
     }
-
-    String getUserCallPrice(String title) => userCallList[
-            userCallList.indexWhere((element) => element.user == title)]
-        .price
-        .toString();
-    bool hasUserCalled(String title) =>
-        userCallList.where((element) => element.user == title).isNotEmpty;
-    BetState userBetState(String title) => userCallList[
-            userCallList.indexWhere((element) => element.user == title)]
-        .bet;
 
     return Scaffold(
       body: Stack(

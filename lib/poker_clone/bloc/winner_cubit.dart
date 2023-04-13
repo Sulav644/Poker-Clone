@@ -119,12 +119,7 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
     for (var i = 0; i < 5; i++) {
       fiveMainCards.add(totalCardsList[i]);
     }
-    print('fiveCards ${fiveMainCards.length}');
 
-    print('firstPlayerCard ${firstPlayerCards.length}');
-    print('secondPlayerCard ${secondPlayerCards.length}');
-    print('thirdPlayerCard ${thirdPlayerCards.length}');
-    print('fourthPlayerCard ${fourthPlayerCards.length}');
     firstPlayerCards = addCardsInList(firstPlayerCards, totalCardsList, 11, 12);
     secondPlayerCards = addCardsInList(secondPlayerCards, totalCardsList, 5, 6);
     thirdPlayerCards = addCardsInList(thirdPlayerCards, totalCardsList, 9, 10);
@@ -137,28 +132,8 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
 
     cardsHandsAndValuesList.add(checkTheHandRanksOfCard(thirdPlayerCards));
     cardsHandsAndValuesList.add(checkTheHandRanksOfCard(fourthPlayerCards));
-    print('isBotOneFold $isBotOneFold');
-    print('isUserFold $isUserFold');
-
-    print('length ${cardsHandsAndValuesList.length}');
-
-    for (var element in cardsHandsAndValuesList) {
-      for (var newElement in element.cardAndCount) {
-        print(
-            'cardRank ${element.winnerRanks} ${cardsHandsAndValuesList.indexOf(element)}');
-        print('handRank ${element.handRank}');
-        print('cardHands ${newElement.cardValue}');
-        print('cardCounts ${newElement.count}');
-
-        print('cardRanks ${newElement.rank}');
-      }
-    }
-    for (var element in cardsHandsAndValuesList) {
-      print('handRanks ${element.handRank}');
-    }
 
     WinnerTypeAndIndex winner = winnerTypeAndIndex(cardsHandsAndValuesList);
-    print('winnerType ${winner.winnerType} ${winner.winnerIndex}');
     return winner;
   }
 
@@ -174,14 +149,12 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
       }
     }
 
-    print('winnerRankCount $initialWinnerRank');
     int winnerGroupIndex = 0;
     for (var element in cardsHandsAndValuesList) {
       if (element.handRank == initialWinnerRank) {
         winnerGroupIndex = cardsHandsAndValuesList.indexOf(element);
       }
     }
-    print('winnerGroupIndex $winnerGroupIndex');
     winnerTypeAndIndex = WinnerTypeAndIndex(
         winnerType: winnerRanks[initialWinnerRank],
         winnerIndex: Winner.values[winnerGroupIndex]);
@@ -204,16 +177,8 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
         counts[1].count > 4 ||
         counts[2].count > 4 ||
         counts[3].count > 4) {
-      print(
-          'countIndex ${counts[0].count} ${counts[1].count} ${counts[2].count} ${counts[3].count}');
-      print(
-          'countIndex ${counts[0].index} ${counts[1].index} ${counts[2].index} ${counts[3].index}');
       List<CardTypeCountWithIndex> hasCardOfTypes =
           checkForRoyalFlush(playerCard);
-      print(
-          'cardIndex ${hasCardOfTypes[0].hasCard} ${hasCardOfTypes[1].hasCard} ${hasCardOfTypes[2].hasCard} ${hasCardOfTypes[3].hasCard} ${hasCardOfTypes[4].hasCard}');
-      print(
-          'cardIndex ${hasCardOfTypes[0].index} ${hasCardOfTypes[1].index} ${hasCardOfTypes[2].index} ${hasCardOfTypes[3].index} ${hasCardOfTypes[4].index}');
       List<int> sequencesOfCard = checkForStraightFlush(playerCard);
       int checkIfIndexMatches(
           {required int hasCardOfTypeIndex, required int suitGroupIndex}) {
@@ -221,11 +186,9 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
         for (var element in counts[suitGroupIndex].index) {
           if (hasCardOfTypes[hasCardOfTypeIndex].index == element) {
             isMatch++;
-            print('index $element');
           }
         }
 
-        print('isMatch $isMatch');
         return isMatch;
       }
 
@@ -240,8 +203,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
         suitGroupIndex = 3;
       }
 
-      print(
-          'checkMatches ${checkIfIndexMatches(hasCardOfTypeIndex: 4, suitGroupIndex: suitGroupIndex)}');
       if ((hasCardOfTypes[0].hasCard &&
               checkIfIndexMatches(
                       hasCardOfTypeIndex: 0, suitGroupIndex: suitGroupIndex) ==
@@ -262,7 +223,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
               checkIfIndexMatches(
                       hasCardOfTypeIndex: 4, suitGroupIndex: suitGroupIndex) ==
                   1)) {
-        print('royal flush');
         cardsHandsAndValues = CardHandsAndValues(
             winnerRanks: WinnerRanks.royalFlush,
             handRank: 0,
@@ -279,7 +239,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
           sequencesOfCard[4] == 5 ||
           sequencesOfCard[5] == 5 ||
           sequencesOfCard[6] == 5) {
-        print('straight flush');
         cardsHandsAndValues = CardHandsAndValues(
             winnerRanks: WinnerRanks.straightFlush,
             handRank: 1,
@@ -300,7 +259,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
                     count: 1,
                     rank: cardRanks.indexOf(playerCard[index].card.value))));
       }
-      print('flush');
       return cardsHandsAndValues;
     } else {
       List<CardAndCount> fullHouse = checkRepeatCards(playerCard, 3, 2);
@@ -309,8 +267,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
       List<CardAndCount> threeOfAKind = checkRepeatCards(playerCard, 3, 3);
 
       List<int> straight = checkForStraightFlush(playerCard);
-      print('fullHouse ${fullHouse.length}');
-      print('fourOfAKind ${fourOfAKind.length}');
       if (fullHouse.length == 2 &&
           fullHouse.fold(0,
                   (previousValue, element) => previousValue + element.count) ==
@@ -406,9 +362,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
         );
       }
 
-      for (var element in fullHouse) {
-        print('list ${element.cardValue} ${element.count}');
-      }
       return cardsHandsAndValues;
     }
   }
@@ -511,7 +464,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
 
   List<CardAndCount> checkRepeatCards(List<PlayingCardView> playingCards,
       int compareWithFirstValue, int compareWithSecondValue) {
-    print('four kind');
     List<CardAndCount> cardAndCount = [];
 
     List<PlayingCardView> filteredList = [];
@@ -535,8 +487,6 @@ class WinnerCubit extends Cubit<List<PlayingCardView>> {
       emit([...filteredList]);
 
       if (count == compareWithFirstValue || count == compareWithSecondValue) {
-        print('${element.card.suit} ${element.card.value}');
-        print('count $count');
         cardAndCount.add(CardAndCount(
             cardValue: element.card.value,
             count: count,

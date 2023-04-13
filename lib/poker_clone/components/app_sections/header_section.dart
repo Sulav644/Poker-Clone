@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playing_cards/playing_cards.dart';
 
@@ -20,7 +18,7 @@ class HeaderSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final callLabelColor = Color.fromARGB(255, 117, 135, 150);
+    const callLabelColor = Color.fromARGB(255, 117, 135, 150);
     final userCallList = context.watch<UserCallListCubit>().state;
     bool hasUserCalled(String title) =>
         userCallList.where((element) => element.user == title).isNotEmpty;
@@ -84,7 +82,7 @@ class HeaderSection extends StatelessWidget {
                 ]),
               ],
             )),
-        SettingsWidgets(),
+        const SettingsWidgets(),
       ],
     );
   }

@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-
 import '../../core/utils.dart';
 
 class SettingsWidgets extends StatelessWidget {
@@ -9,12 +6,12 @@ class SettingsWidgets extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: heightWithScreenRatio(context, 0.16),
       child: Row(children: [
         settingChild(context, Colors.black, 'Standard'),
         Spacing().horizontalSpaceWithRatio(context, 0.005),
-        settingChild(context, Color.fromARGB(255, 94, 36, 16), 'vs Bots'),
+        settingChild(context, const Color.fromARGB(255, 94, 36, 16), 'vs Bots'),
         Spacing().horizontalSpaceWithRatio(context, 0.015),
         settingIcon(context)
       ]),
@@ -25,11 +22,13 @@ class SettingsWidgets extends StatelessWidget {
       width: widthWithScreenRatio(context, 0.06),
       height: widthWithScreenRatio(context, 0.06),
       decoration: BoxDecoration(
-          color: Color.fromARGB(0, 199, 197, 197),
+          color: const Color.fromARGB(0, 199, 197, 197),
           borderRadius: BorderRadius.circular(10),
-          image: DecorationImage(
+          image: const DecorationImage(
               image: AssetImage('assets/images/wood.jpg'), fit: BoxFit.cover),
-          boxShadow: [BoxShadow(color: Colors.black, offset: Offset(-2, 2))]),
+          boxShadow: const [
+            BoxShadow(color: Colors.black, offset: Offset(-2, 2))
+          ]),
       child: Icon(
         Icons.settings,
         size: widthWithScreenRatio(context, 0.044),
@@ -50,7 +49,7 @@ class SettingsWidgets extends StatelessWidget {
                 horizontal: widthWithScreenRatio(context, 0.01)),
             child: Text(
               title,
-              style: TextStyle(color: Colors.white, fontSize: 12),
+              style: const TextStyle(color: Colors.white, fontSize: 12),
             ),
           ));
 }

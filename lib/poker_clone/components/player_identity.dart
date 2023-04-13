@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
-
 import '../../core/utils.dart';
 
 class PlayerIdentity extends StatelessWidget {
@@ -23,17 +20,17 @@ class PlayerIdentity extends StatelessWidget {
         decoration: BoxDecoration(
             gradient: (() {
               if (title.contains('user') || (title.isNotEmpty && bits > 0)) {
-                return LinearGradient(colors: [
+                return const LinearGradient(colors: [
                   Color.fromARGB(255, 34, 24, 21),
                   Color.fromARGB(255, 94, 26, 1)
                 ]);
               } else if (bits == 0) {
-                return LinearGradient(colors: [
+                return const LinearGradient(colors: [
                   Color.fromARGB(255, 34, 24, 21),
                   Color.fromARGB(255, 34, 24, 21)
                 ]);
               } else {
-                return LinearGradient(colors: [
+                return const LinearGradient(colors: [
                   Color.fromARGB(255, 94, 26, 1),
                   Color.fromARGB(255, 94, 26, 1)
                 ]);
@@ -44,7 +41,7 @@ class PlayerIdentity extends StatelessWidget {
           padding: EdgeInsets.symmetric(
               vertical: heightWithScreenRatio(context, 0.012)),
           child: DefaultTextStyle(
-            style: TextStyle(color: Colors.white, fontSize: 13),
+            style: const TextStyle(color: Colors.white, fontSize: 13),
             child: Row(
                 mainAxisAlignment: title.isEmpty
                     ? MainAxisAlignment.center
@@ -57,15 +54,15 @@ class PlayerIdentity extends StatelessWidget {
                       : Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Spacing().horizontalSpaceWithRatio(context, 0.015),
+                            Spacing().horizontalSpaceWithRatio(context, 0.01),
                             if (title.contains('user'))
-                              CircleAvatar(
+                              const CircleAvatar(
                                 backgroundColor: Colors.green,
                                 radius: 5,
                               ),
                             Spacing().horizontalSpaceWithRatio(context, 0.005),
                             Text(title),
-                            Icon(
+                            const Icon(
                               Icons.card_giftcard,
                               color: Colors.white,
                               size: 15,

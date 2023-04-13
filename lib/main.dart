@@ -5,7 +5,6 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:poker_clone/poker_clone/bloc/cards_distribution_cubit.dart';
 import 'package:poker_clone/poker_clone/bloc/winner_cubit.dart';
 import 'package:poker_clone/poker_clone/home_page.dart';
-
 import 'poker_clone/bloc/app_logic_cubits.dart';
 
 void main() {
@@ -43,7 +42,7 @@ class MyApp extends StatelessWidget {
           theme: ThemeData(
             primarySwatch: Colors.blue,
           ),
-          home: HomePage(),
+          home: const HomePage(),
         ));
   }
 }

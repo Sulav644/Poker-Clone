@@ -1,10 +1,6 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:playing_cards/playing_cards.dart';
-
 import '../../core/utils.dart';
 
 class VerticalBotsWithCards extends StatelessWidget {
@@ -40,7 +36,7 @@ class VerticalBotsWithCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return bottomForFirstCard != null
-        ? Container(
+        ? SizedBox(
             width: widthWithScreenRatio(context, 0.17),
             height: heightWithScreenRatio(context, 0.235),
             child: Stack(
@@ -82,7 +78,7 @@ class VerticalBotsWithCards extends StatelessWidget {
                     backgroundColor: Colors.white,
                     child: Icon(
                       Icons.person,
-                      color: Color.fromARGB(255, 160, 157, 157),
+                      color: const Color.fromARGB(255, 160, 157, 157),
                       size: widthWithScreenRatio(context, 0.05),
                     ),
                   ),
@@ -90,7 +86,7 @@ class VerticalBotsWithCards extends StatelessWidget {
               ],
             ),
           )
-        : Container(
+        : SizedBox(
             width: widthWithScreenRatio(context, 0.17),
             height: heightWithScreenRatio(context, 0.235),
             child: Stack(

@@ -25,7 +25,7 @@ final cardListFirst = [
 class CardsDistributionCubit extends Cubit<List<PlayingCardView>> {
   CardsDistributionCubit() : super(cardListFirst);
   PlayingCardView selectCard() {
-    final random = new Random();
+    final random = Random();
     PlayingCardView selectedCard;
     List<PlayingCardView> filteredList = [];
     final cardIndex = random.nextInt(state.length);

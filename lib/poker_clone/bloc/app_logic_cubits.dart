@@ -14,7 +14,7 @@ class StartGameCubit extends Cubit<bool> {
 class WinGameCubit extends Cubit<bool> {
   WinGameCubit() : super(false);
   void toggleState(bool status) {
-    Future.delayed(Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 1), () {
       emit(status);
     });
   }
@@ -73,13 +73,13 @@ enum Rounds { nextLevel, showThreeCards, firstPlayer, none }
 class TurnRoundCubit extends Cubit<Rounds> {
   TurnRoundCubit() : super(Rounds.none);
   void movieRound() {
-    Future.delayed(Duration(seconds: 1), () => emit(Rounds.nextLevel))
+    Future.delayed(const Duration(seconds: 1), () => emit(Rounds.nextLevel))
         .then((value) => Future.delayed(
-            Duration(seconds: 1), () => emit(Rounds.showThreeCards)))
+            const Duration(seconds: 1), () => emit(Rounds.showThreeCards)))
         .then((value) => Future.delayed(
-            Duration(seconds: 1), () => emit(Rounds.firstPlayer)))
-        .then((value) =>
-            Future.delayed(Duration(seconds: 1), () => emit(Rounds.none)));
+            const Duration(seconds: 1), () => emit(Rounds.firstPlayer)))
+        .then((value) => Future.delayed(
+            const Duration(seconds: 1), () => emit(Rounds.none)));
 
     emit(Rounds.none);
   }

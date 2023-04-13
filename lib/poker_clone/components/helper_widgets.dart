@@ -23,7 +23,7 @@ class HelperWidgets {
           padding: const EdgeInsets.all(6),
           child: Text(
             title,
-            style: TextStyle(color: Colors.white, fontSize: 11),
+            style: const TextStyle(color: Colors.white, fontSize: 11),
           ),
         ),
       );
@@ -39,7 +39,7 @@ class HelperWidgets {
             padding: EdgeInsets.all(heightWithScreenRatio(context, 0.02)),
             child: Text(
               title,
-              style: TextStyle(color: Colors.white),
+              style: const TextStyle(color: Colors.white),
             ),
           ));
 
@@ -60,8 +60,9 @@ class HelperWidgets {
                 ),
                 horizontal: widthWithScreenRatio(context, 0.01)),
             child: Text(
-              title,
-              style: TextStyle(color: Colors.white),
+              '\$$title',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white),
             ),
           ));
 
@@ -69,14 +70,14 @@ class HelperWidgets {
         decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(10),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(color: Colors.black, offset: Offset(-1.5, 1.5))
             ]),
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Text(
             title,
-            style: TextStyle(
+            style: const TextStyle(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),

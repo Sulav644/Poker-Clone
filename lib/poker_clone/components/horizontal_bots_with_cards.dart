@@ -1,10 +1,6 @@
 import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:playing_cards/playing_cards.dart';
-
 import '../../core/utils.dart';
 
 class HorizontalBotsWithCards extends StatelessWidget {
@@ -40,7 +36,7 @@ class HorizontalBotsWithCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return rightForFirstCard != null
-        ? Container(
+        ? SizedBox(
             width: widthWithScreenRatio(context, 0.12),
             height: heightWithScreenRatio(context, 0.28),
             child: Stack(
@@ -104,7 +100,7 @@ class HorizontalBotsWithCards extends StatelessWidget {
               ],
             ),
           )
-        : Container(
+        : SizedBox(
             width: widthWithScreenRatio(context, 0.12),
             height: heightWithScreenRatio(context, 0.28),
             child: Stack(

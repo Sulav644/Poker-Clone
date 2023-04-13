@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:playing_cards/playing_cards.dart';
 
@@ -34,7 +32,7 @@ class FooterSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final callLabelColor = Color.fromARGB(255, 117, 135, 150);
+    const callLabelColor = Color.fromARGB(255, 117, 135, 150);
     final userCallList = context.watch<UserCallListCubit>().state;
     bool hasUserCalled(String title) =>
         userCallList.where((element) => element.user == title).isNotEmpty;
@@ -45,7 +43,7 @@ class FooterSection extends StatelessWidget {
             userCallList.indexWhere((element) => element.user == title)]
         .price
         .toString();
-    return Container(
+    return SizedBox(
       height: heightWithScreenRatio(context, 0.2),
       child: Stack(
         children: [
@@ -79,7 +77,7 @@ class FooterSection extends StatelessWidget {
               ),
             ),
           if (showUserCallOptions)
-            Container(
+            SizedBox(
               width: widthWithScreenRatio(context, 1),
               child:
                   Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -157,7 +155,7 @@ class FooterSection extends StatelessWidget {
             ],
           ),
           if (showRaisedPrices)
-            Container(
+            SizedBox(
               width: widthWithScreenRatio(context, 1),
               child: raiseOptions,
             )

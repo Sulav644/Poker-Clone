@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/src/widgets/framework.dart';
-import 'package:flutter/src/widgets/placeholder.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:playing_cards/playing_cards.dart';
 
 import '../../../core/utils.dart';
@@ -43,7 +40,7 @@ class BodySection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showStartGameDialog = context.watch<StartGameCubit>().state;
-    final callLabelColor = Color.fromARGB(255, 117, 135, 150);
+    const callLabelColor = Color.fromARGB(255, 117, 135, 150);
     final userCallList = context.watch<UserCallListCubit>().state;
     bool hasUserCalled(String title) =>
         userCallList.where((element) => element.user == title).isNotEmpty;
@@ -83,10 +80,10 @@ class BodySection extends StatelessWidget {
         child: (() {
           if (!showStartGameDialog || shownWinner) {
             return Container(
-              width: widthWithScreenRatio(context, 0.45),
-              height: heightWithScreenRatio(context, 0.3),
+              width: widthWithScreenRatio(context, 0.48),
+              height: heightWithScreenRatio(context, 0.36),
               decoration: BoxDecoration(
-                  color: Color.fromARGB(255, 221, 210, 108),
+                  color: const Color.fromARGB(255, 221, 210, 108),
                   borderRadius: BorderRadius.circular(10)),
               alignment: Alignment.center,
               child: Column(
@@ -110,7 +107,7 @@ class BodySection extends StatelessWidget {
                                 return 'Bot2';
                               }
                             }())}'
-                              ' won with '
+                              ' won with \$$totalBid '
                               '${(() {
                               if (winnerTypeAndIndex.winnerType ==
                                   WinnerRanks.royalFlush) {
@@ -145,7 +142,7 @@ class BodySection extends StatelessWidget {
                             }())}'
                               '. Do you want to continue ?',
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                           color: Color.fromARGB(255, 39, 12, 2),
                           fontSize: 20,
                           fontWeight: FontWeight.bold),
@@ -176,7 +173,7 @@ class BodySection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      Container(
+                      SizedBox(
                         width: widthWithScreenRatio(context, 0.1),
                         height: heightWithScreenRatio(context, 0.4),
                         child: Column(
@@ -218,7 +215,7 @@ class BodySection extends StatelessWidget {
                         Spacing().verticalSpaceWithRatio(context, 0.02),
                         HelperWidgets().callLabel(
                             context: context,
-                            color: Color.fromARGB(255, 206, 152, 170),
+                            color: const Color.fromARGB(255, 206, 152, 170),
                             title: '$totalBid'),
                         Spacing().verticalSpaceWithRatio(context, 0.04),
                         Row(
@@ -241,7 +238,7 @@ class BodySection extends StatelessWidget {
                           ],
                         ),
                       ]),
-                      Container(
+                      SizedBox(
                         width: widthWithScreenRatio(context, 0.1),
                         height: heightWithScreenRatio(context, 0.4),
                         child: Column(
