@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:poker_clone/poker_clone/bloc/cards_distribution_cubit.dart';
 import 'package:poker_clone/poker_clone/bloc/winner_cubit.dart';
 import 'package:poker_clone/poker_clone/home_page.dart';
+
+import 'poker_clone/bloc/app_logic_cubits.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -11,7 +14,7 @@ void main() {
       [DeviceOrientation.landscapeLeft, DeviceOrientation.landscapeRight]);
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-  runApp(const MyApp());
+  runApp(Phoenix(child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {
